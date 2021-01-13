@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Module: test",
+            "type": "python",
+            "request": "launch",
+            "module": "si_utils.test",
+            "console": "integratedTerminal",
+            "env": {
+                "PYDEBUG": "1"
+            },
+            "justMyCode": false
+        },
+        {
             "name": "Python: Module: __init__",
             "type": "python",
             "request": "launch",
