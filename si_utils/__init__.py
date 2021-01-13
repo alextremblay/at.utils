@@ -4,8 +4,8 @@ if __name__ == "__main__":
     import os
     if os.environ.get('PYDEBUG'):
         # we're in a debugger session
-        from .main import get_config_file
-        d = get_config_file('certs')
+        from .dev_utils import bump_version
+        bump_version()
         exit()
     try:
         pass  # cli code goes here
