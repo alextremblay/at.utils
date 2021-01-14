@@ -96,6 +96,11 @@ def test_get_config_key(tmp_path: Path, monkeypatch: MonkeyPatch):
     assert result == 'val1'
 
 
+def test_get_cache_dir():
+    # TODO: figure out how to safely mock root FS calls and test this function
+    pass
+
+
 def test_timeit():
     # the clock starts as soon as the class is initialized
     timer = Timeit()

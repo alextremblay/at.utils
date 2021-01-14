@@ -13,7 +13,7 @@ import json
 from textwrap import dedent
 import time
 
-from ._vendor.appdirs import site_config_dir, user_config_dir
+from ._vendor.appdirs import AppDirs
 from ._vendor.decorator import decorate
 
 
@@ -73,12 +73,12 @@ def get_config_file(app_name: str) -> Path:
         all_conf_files.extend(env_var_path_files)
 
     # handle site config
-    site_conf = Path(site_config_dir('si-utils'))
+    site_conf = Path(AppDirs('si-utils').site_config_dir)
     site_conf_files = [site_conf.joinpath(name) for name in config_file_names]
     all_conf_files.extend(site_conf_files)
 
     # handle user config
-    user_conf = Path(user_config_dir('si-utils'))
+    user_conf = Path(AppDirs('si-utils').user_config_dir)
     user_conf_files = [user_conf.joinpath(name) for name in config_file_names]
     all_conf_files.extend(user_conf_files)
 
@@ -136,6 +136,40 @@ def get_config_key(app_name: str, key: str):
         raise Exception(
             f"No env var {env_var_name} found and no key '{key}' "
             f"found in configuration file {conf_file}")
+
+
+def get_cache_dir(app_name: str) -> Path:
+    """
+    create and return a cache dir for cache data.
+    prefer system-wide data dir, fall back to user cache dir
+    """
+    env_var_file = os.environ.get(f'{app_name.upper()}_CACHE_PATH')
+    if env_var_file:
+        try:
+            path = Path(env_var_file)
+            path.mkdir(parents=True, exist_ok=True)
+            return path
+        except OSError:
+            pass
+    system_cache_dir = Path(AppDirs('si-utils').site_data_dir)
+    system_cache_dir = system_cache_dir.joinpath(app_name)
+    try:
+        system_cache_dir.mkdir(parents=True, exist_ok=True)
+        return system_cache_dir
+    except OSError:
+        pass
+    user_cache_dir = Path(AppDirs('si-utils').user_cache_dir)
+    user_cache_dir = user_cache_dir.joinpath(app_name)
+    try:
+        user_cache_dir.mkdir(parents=True, exist_ok=True)
+        return user_cache_dir
+    except OSError:
+        raise Exception(
+            f"Unable to create or use {user_cache_dir}, "
+            f"unable to create or use {system_cache_dir}, "
+            f"and '{app_name.upper()}_CACHE_PATH' is either "
+            "unspecified or invalid."
+        )
 
 
 def txt(s: str) -> str:
