@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "si_utils"
-version = "0.1.4"
+version = "0.1.5"
 description = "an opinionated set of utilities designed to be easily included in any number of projects"
 authors = ["Alex Tremblay <alex.tremblay@utoronto.ca>", "University of Toronto"]
 license = "MIT"
