@@ -13,7 +13,7 @@ try:
 except ImportError:
     raise ImportError(
         "In order to use this module, the si-utils package must be "
-        "installed with the 'log' extra (ex. `pip install si-utils[log]")
+        "installed with the 'yaml' extra (ex. `pip install si-utils[yaml]")
 
 
 KeyPath = str

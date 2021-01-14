@@ -31,6 +31,8 @@ def test_log(
     assert capsys.readouterr().err == ''
     logger.info('logging now enabled')
     module_a.doathing()
+    with logger.catch():
+        1 / 0
     logfile = tmp_path.joinpath('test.log')
 
     # test logfile output
@@ -44,10 +46,17 @@ def test_log(
         "default file log level should not capture TRACE messages"
     assert 'This is a DEBUG message' in logfile_output, \
         "default file log level should capture DEBUG messages"
+    assert 'An error has been caught in function' in logfile_output, \
+        "log file should collect exception messages"
 
     # test stderr output
-    stderr = capsys.readouterr().err
+    cap = capsys.readouterr()
+    stderr = cap.err
     assert 'logging now enabled' in stderr, \
         "logger stderr handler must handle INFO level messages by default"
     assert 'This is a DEBUG message' not in stderr, \
         "default stderr log level should not capture DEBUG messages"
+
+    # TODO: figure out a way to test sentry. There seems to be some
+    # wierd interaction with pytest which prevents it from working.
+    # it doesn't fail, it just doesn't do anything.
