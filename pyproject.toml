@@ -34,10 +34,14 @@ upgrade-vendored-deps = {shell = """\
     pip install -U -t . appdirs boltons decorator; \
     """}
 sudo-install = {shell = """\
-    rm -f dist/*; \
+    
 	poetry build; \
 	sudo /usr/local/bin/pip3 install dist/*.whl; \
     """}
+publish = {shell = """\
+    git push --follow-tags; \
+    poetry build; \
+    poetry publish"""}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
