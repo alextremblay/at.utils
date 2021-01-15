@@ -6,7 +6,7 @@ This module can be used even if you don't install any of si-util's extras
 """
 
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import configparser
 import json
@@ -15,6 +15,10 @@ import time
 
 from ._vendor.appdirs import AppDirs
 from ._vendor.decorator import decorate
+from ._vendor import toml
+from .log import get_logger
+
+# TODO: instrument get_* functions in main module with logging
 
 
 def _cache(func, *args, **kw):
@@ -22,7 +26,7 @@ def _cache(func, *args, **kw):
         key = args, frozenset(kw.items())
     else:
         key = args
-    cache = func.cache  # attribute added by memoize
+    cache = func.cache  # attribute added by `cache` decorator
     if key not in cache:
         cache[key] = func(*args, **kw)
     return cache[key]
@@ -30,16 +34,16 @@ def _cache(func, *args, **kw):
 
 def cache(f):
     """
-    A simple memoize implementation. It works by adding a .cache dictionary
-    to the decorated function. The cache will grow indefinitely, so it is
-    your responsibility to clear it, if needed.
+    A simple signature-preserving memoize implementation. It works by adding
+    a .cache dictionary to the decorated function. The cache will grow
+    indefinitely, so it is your responsibility to clear it, if needed.
     """
     f.cache = {}
     return decorate(f, _cache)
 
 
 @cache
-def get_config_file(app_name: str) -> Path:
+def get_config_file(app_name: str) -> Optional[Path]:
     """
     Find a valid config file for a given app name.
     File can be stored in a site-wide directory (ex. /etc/xdg/si-utils)
@@ -56,17 +60,25 @@ def get_config_file(app_name: str) -> Path:
     lookup procedure.
     SI_UTILS_CONFIG_PATH exists mainly for testing purposes
     """
+    log = get_logger(app_name)
     # define common constants
     valid_extensions = ['ini', 'yaml', 'json', 'toml']
     all_conf_files = []
     config_file_names = [f'{app_name}.{ext}' for ext in valid_extensions]
 
     # handle env vars
-    env_var_file = os.environ.get(f'{app_name.upper()}_CONFIG_FILE')
+    env_var = f'{app_name.upper()}_CONFIG_FILE'
+    env_var_file = os.environ.get(env_var)
     if env_var_file and Path(env_var_file).exists():
+        log.debug(
+            f'Env var {env_var} is set and valid. '
+            f'Loading configuration from file {env_var_file}')
         return Path(env_var_file)
     env_var_path = os.environ.get('SI_UTILS_CONFIG_PATH')
     if env_var_path and Path(env_var_path).is_dir():
+        log.debug(
+            f'Env var SI_UTILS_CONFIG_PATH is set and valid. '
+            f'Adding {env_var_path} to config file search path')
         env_var_path_files = [
             Path(env_var_path).joinpath(name) for name in config_file_names
         ]
@@ -83,17 +95,22 @@ def get_config_file(app_name: str) -> Path:
     all_conf_files.extend(user_conf_files)
 
     # find conf file
+    log.trace(f'Searching for the following config files: {all_conf_files}')
     valid_conf_files = [file for file in all_conf_files if file.exists()]
     if len(valid_conf_files) < 1:
-        raise Exception(
-            f"Could not find a valid config file for {app_name}. "
+        log.debug(
+            f"Could not find a valid config file for app_name {app_name}. "
             f"Searched for files {config_file_names} in folders {site_conf} "
             f"and {user_conf}, found nothing")
+        return None
+    log.debug(
+        f'Found the following config files: {valid_conf_files}.'
+        f'Using config file:: {valid_conf_files[0]}')
     return valid_conf_files[0]
 
 
 @cache
-def get_config_obj(app_name: str) -> Dict[str, Any]:
+def get_config_obj(app_name: str) -> Optional[Dict[str, Any]]:
     """
     Finds a valid config file, loads it into memory, and converts it
     into a dictionary. Can be called multiple times without triggering
@@ -102,18 +119,30 @@ def get_config_obj(app_name: str) -> Dict[str, Any]:
     keys in .ini files must be stored in the DEFAULT section
     only top-level keys in .json config files are supported
     """
+    log = get_logger(app_name)
     conf_file = get_config_file(app_name)
+    if not conf_file:
+        log.debug(f'Could not load config from file for app_name {app_name}')
+        return None
     if conf_file.suffix == '.ini':
+        log.debug(
+            f'Loading configuration object from [DEFAULT] '
+            f'section of {conf_file}')
         cfp = configparser.ConfigParser()
         cfp.read(conf_file)
         obj = dict(cfp['DEFAULT'])
     elif conf_file.suffix == '.json':
+        log.debug(f'Loading config object from {conf_file}')
         obj = json.loads(conf_file.read_text())
+    elif conf_file.suffix == '.toml':
+        log.debug(f'Loading config object from {conf_file}')
+        obj = toml.loads(conf_file.read_text())
     else:
-        raise Exception(
+        log.debug(
             f"Found config file {conf_file}. get_config_key "
             f"does not support config files of type {conf_file.suffix}. "
-            "Only .ini and .json files are supported")
+            "Only .toml, .ini and .json files are supported")
+        return None
     return obj
 
 
@@ -125,17 +154,26 @@ def get_config_key(app_name: str, key: str):
     keys in .ini files must be stored in the DEFAULT section
     only top-level keys in .json config files are supported
     """
+    log = get_logger(app_name)
     env_var_name = f'{app_name.upper()}_{key.upper()}'
     env_var = os.environ.get(env_var_name)
     if env_var:
+        log.debug(
+            f'Env var {env_var_name} is set, using as value instead of '
+            'loading config file')
         return env_var
-    try:
-        return get_config_obj(app_name)[key]
-    except KeyError:
-        conf_file = get_config_file(app_name)
-        raise Exception(
-            f"No env var {env_var_name} found and no key '{key}' "
-            f"found in configuration file {conf_file}")
+
+    obj = get_config_obj(app_name)
+    if not obj:
+        log.debug('Failed to load configuration from file.')
+        return None
+
+    val = obj.get(key)
+    if not val:
+        log.debug(f'Could not find key {key} in config object {obj}')
+        return None
+
+    return val
 
 
 def get_cache_dir(app_name: str) -> Path:

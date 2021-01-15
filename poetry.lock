@@ -3,7 +3,7 @@ name = "aiocontextvars"
 version = "0.2.2"
 description = "Asyncio support for PEP-567 contextvars backport."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
@@ -46,14 +46,6 @@ tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)"
 tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six"]
 
 [[package]]
-name = "boltons"
-version = "20.2.1"
-description = "When they're not builtins, they're boltons."
-category = "main"
-optional = true
-python-versions = "*"
-
-[[package]]
 name = "certifi"
 version = "2020.12.5"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -74,7 +66,7 @@ name = "contextvars"
 version = "2.4"
 description = "PEP 567 Backport"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -115,7 +107,7 @@ name = "immutables"
 version = "0.14"
 description = "Immutable Collections"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [[package]]
@@ -160,7 +152,7 @@ name = "loguru"
 version = "0.5.3"
 description = "Python logging made (stupidly) simple"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
@@ -467,7 +459,7 @@ name = "win32-setctime"
 version = "1.0.3"
 description = "A small Python utility to set file creation time on Windows"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 
 [package.extras]
@@ -495,13 +487,13 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 
 [extras]
 dev-utils = ["tomlkit", "semver"]
-log = ["loguru", "sentry-sdk"]
-yaml = ["ruamel.yaml", "deepmerge", "boltons", "pydantic"]
+sentry = ["sentry-sdk"]
+yaml = ["ruamel.yaml", "deepmerge", "pydantic"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6,<4.0"
-content-hash = "9d38daed92156db15168159dea6487e8c148f2d11f7248252bdcc40c700289dc"
+content-hash = "38466b21be9f4b87f87e80585d90620ef1fe2c716d1a0f710793cba4f9ad304a"
 
 [metadata.files]
 aiocontextvars = [
@@ -519,10 +511,6 @@ atomicwrites = [
 attrs = [
     {file = "attrs-20.3.0-py2.py3-none-any.whl", hash = "sha256:31b2eced602aa8423c2aea9c76a724617ed67cf9513173fd3a4f03e3a929c7e6"},
     {file = "attrs-20.3.0.tar.gz", hash = "sha256:832aa3cde19744e49938b91fea06d69ecb9e649c93ba974535d08ad92164f700"},
-]
-boltons = [
-    {file = "boltons-20.2.1-py2.py3-none-any.whl", hash = "sha256:3dd8a8e3c1886e7f7ba3422b50f55a66e1700161bf01b919d098e7d96dd2d9b6"},
-    {file = "boltons-20.2.1.tar.gz", hash = "sha256:dd362291a460cc1e0c2e91cc6a60da3036ced77099b623112e8f833e6734bdc5"},
 ]
 certifi = [
     {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},

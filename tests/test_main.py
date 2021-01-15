@@ -30,8 +30,8 @@ def test_lst():
 
 def test_get_config_file(tmp_path: Path, monkeypatch: MonkeyPatch):
     # Test the failure condition
-    with pytest.raises(Exception):
-        get_config_file('klsrjgbskvb')
+    file = get_config_file('klsrjgbskvb')
+    assert file is None
 
     # test the *_CONFIG_FILE env var
     test_file = tmp_path / 'test.ini'
@@ -61,11 +61,11 @@ def test_get_config_file(tmp_path: Path, monkeypatch: MonkeyPatch):
 
 def test_get_config_obj(tmp_path: Path, monkeypatch: MonkeyPatch):
     # Test the failure condition
-    with pytest.raises(Exception):
-        test_file = tmp_path / 'badtest.yaml'
-        test_file.write_text(' ')
-        monkeypatch.setenv('BADTEST_CONFIG_FILE', str(test_file))
-        get_config_obj('badtest')
+    test_file = tmp_path / 'badtest.yaml'
+    test_file.write_text(' ')
+    monkeypatch.setenv('BADTEST_CONFIG_FILE', str(test_file))
+    result = get_config_obj('badtest')
+    assert result is None
 
     # test ini
     test_file = tmp_path / 'test3.ini'
@@ -83,16 +83,26 @@ def test_get_config_obj(tmp_path: Path, monkeypatch: MonkeyPatch):
 
 
 def test_get_config_key(tmp_path: Path, monkeypatch: MonkeyPatch):
-    # test env var
-    monkeypatch.setenv('TEST5_KEY1', 'env var value')
+    # test config file missing
     result = get_config_key('test5', 'key1')
+    assert result is None
+
+    # test key missing from config file
+    test_file = tmp_path / 'test6.json'
+    test_file.write_text('{"key2": "val2"}')
+    monkeypatch.setenv('TEST6_CONFIG_FILE', str(test_file))
+    result = get_config_key('test6', 'key1')
+
+    # test env var
+    monkeypatch.setenv('TEST7_KEY1', 'env var value')
+    result = get_config_key('test7', 'key1')
     assert result == 'env var value'
 
     # test with config file
-    test_file = tmp_path / 'test6.json'
+    test_file = tmp_path / 'test8.json'
     test_file.write_text('{"key1": "val1", "key2": "val2"}')
-    monkeypatch.setenv('TEST6_CONFIG_FILE', str(test_file))
-    result = get_config_key('test6', 'key1')
+    monkeypatch.setenv('TEST8_CONFIG_FILE', str(test_file))
+    result = get_config_key('test8', 'key1')
     assert result == 'val1'
 
 
