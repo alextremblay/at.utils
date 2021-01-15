@@ -1,22 +1,14 @@
 import sys
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from getpass import getuser
 
 if TYPE_CHECKING:
     from loguru import Logger
 
-from .main import get_config_key
 from ._vendor.appdirs import user_log_dir
-
-try:
-    from loguru import logger
-    import sentry_sdk
-except ImportError:
-    raise ImportError(
-        "In order to use this module, the si-utils package must be "
-        "installed with the 'log' extra (ex. `pip install si-utils[log]")
+from loguru import logger
 
 STDERR_FORMAT = "<green>{time:MM-DD HH:mm}</> | <blue>{extra[app_name]}</> | \
     <level>{level.name: ^9}</> | <bold>{message}</>"
@@ -24,23 +16,42 @@ STDERR_FORMAT = "<green>{time:MM-DD HH:mm}</> | <blue>{extra[app_name]}</> | \
 LOGFILE_FORMAT = "{time:MM-DD HH:mm} | {level.name: ^8} | {message} \n\
     Data: {extra}"
 
+DEFAULT_LOG_DIR = '/var/log/si-utils'
+
 
 def get_logger(app_name: str) -> 'Logger':
     "get a pre-configured logger instance"
     log = logger.opt(colors=True).bind(app_name=app_name)
-    log.disable(None)  # only cli apps should enable the logger
+    log.disable('')  # only cli apps should enable the logger
     log._si_app_name = app_name  # type: ignore
     return log
 
 
 def _setup_sentry_sink(_logger: 'Logger', app_name: str):
-    try:
-        sentry_dsn = get_config_key('shared', 'sentry_dsn')
-    except Exception:
-        # skip sentry sink setup if sentry not configured
-        return
-    
     if os.environ.get('DISABLE_SENTRY_LOGGING'):
+        _logger.debug(
+            'Env var DISABLE_SENTRY_LOGGING is set. Sentry logging disabled')
+        return
+
+    # import here to avoid circular dependency
+    from .main import get_config_key
+
+    sentry_dsn = get_config_key('shared', 'sentry_dsn')
+    if not sentry_dsn:
+        sentry_dsn = get_config_key(app_name, 'sentry_dsn')
+    if not sentry_dsn:
+        _logger.debug(
+            'Could not find valid configuration for Sentry. '
+            'Sentry logging disabled')
+        return
+
+    try:
+        import sentry_sdk
+    except ImportError:
+        _logger.debug(
+            'the sentry_sdk package is not installed. Sentry logging disabled.'
+            ' Please install si-utils with the "sentry" extra '
+            '(ex. `pip install si-utils[sentry]`).')
         return
     # the way we set up sentry logging assumes you have one sentry
     # project for all your apps, and want to group all your alerts
@@ -79,6 +90,60 @@ def _setup_sentry_sink(_logger: 'Logger', app_name: str):
     _logger.add(sentry_sink, level='ERROR')
 
 
+def _setup_logfile_sink(_logger: 'Logger', app_name: str, file_log_level: str):
+    if not file_log_level:
+        _logger.debug(
+            f'file_log_level is {file_log_level}. File logging disabled.')
+        return
+    if os.environ.get('DISABLE_FILE_LOGGING'):
+        _logger.debug(
+            'Env var DISABLE_FILE_LOGGING is set. File logging disabled.')
+        return
+
+    def get_log_file(backup=False) -> Optional[Path]:
+        log_dir = os.environ.get('DEFAULT_LOG_DIR', DEFAULT_LOG_DIR)
+        if log_dir != DEFAULT_LOG_DIR:
+            _logger.debug(
+                'Env var DEFAULT_LOG_DIR is set. '
+                'Will write to a log file in there')
+        main_log_file = Path(f'{log_dir}/{app_name}.log')
+        backup_log_file = Path(f'{user_log_dir(app_name)}/output.log')
+        if not backup:
+            log_file = main_log_file
+        else:
+            log_file = backup_log_file
+
+        if log_file.is_file():
+            _logger.debug(
+                f'Found log file {log_file}. Will log messages to it')
+            return log_file
+        # attempt to create log_file
+        try:
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            log_file.touch()
+            _logger.debug(
+                f'Created log file {log_file}. Will log messages to it')
+            return log_file
+        except OSError:
+            if not backup:
+                _logger.debug(
+                    f"Unable to write logs to log file {log_file}. "
+                    f"Will write to {backup_log_file} instead."
+                )
+                return get_log_file(backup=True)
+            else:
+                _logger.error(
+                    f"Unable to write logs to log file {log_file} or "
+                    f"to alternate log file {backup_log_file}. "
+                    "Skipping file logging."
+                )
+                return None
+
+    log_file = get_log_file()
+    if log_file:
+        _logger.add(sink=log_file, format=LOGFILE_FORMAT, level=file_log_level)
+
+
 def enable_logging(
         _logger: 'Logger',
         stderr_level='INFO',
@@ -103,38 +168,4 @@ def enable_logging(
     _setup_sentry_sink(_logger, app_name)
 
     # Set up logging to file
-    if not file_log_level:
-        return
-    log_dir = os.environ.get('SI_LOG_DIR', '/var/log/si-utils')
-    log_path = Path(log_dir)
-    log_file = log_path.joinpath(f'{app_name}.log')
-    if not log_file.is_file():
-        # attempt to create log_file
-        try:
-            log_file.parent.mkdir(parents=True, exist_ok=True)
-            log_file.touch()
-        except OSError:
-            backup_log_path = Path(user_log_dir(app_name))
-            backup_log_file = backup_log_path.joinpath('output.log')
-            _logger.debug(
-                f"unable to write logs to log file {log_file}. "
-                f"Log folder {log_path} does not exist and cannot be "
-                f"created. will write to {backup_log_file} instead"
-            )
-
-            if not backup_log_file.is_file():
-                # attempt to create log_file
-                try:
-                    backup_log_file.parent.mkdir(parents=True, exist_ok=True)
-                    backup_log_file.touch()
-                except OSError:
-                    _logger.error(
-                        f"unable to write logs to log file {log_file} or "
-                        f"to alternate log file {backup_log_file}. "
-                        "skipping file logging."
-                    )
-    if log_path.is_dir():
-        # at this point, either log_path was already a dir,
-        # or it was successfully created
-        log_file = log_path.joinpath(f'{app_name}.log')
-        _logger.add(sink=log_file, format=LOGFILE_FORMAT)
+    _setup_logfile_sink(_logger, app_name, file_log_level)

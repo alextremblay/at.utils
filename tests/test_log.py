@@ -17,7 +17,7 @@ def test_log(
         ):
 
     # override the default log dir
-    monkeypatch.setenv('SI_LOG_DIR', str(tmp_path))
+    monkeypatch.setenv('DEFAULT_LOG_DIR', str(tmp_path))
 
     # disable logging to sentry during test
     monkeypatch.setenv('DISABLE_SENTRY_LOGGING', '1')
