@@ -4,7 +4,6 @@ import time
 from si_utils.main import lst, txt, get_config_file, \
     get_config_obj, get_config_key, Timeit
 
-import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 

@@ -6,6 +6,7 @@ This module can be used even if you don't install any of si-util's extras
 """
 
 import os
+import sys
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import configparser
@@ -15,7 +16,6 @@ import time
 
 from ._vendor.appdirs import AppDirs
 from ._vendor.decorator import decorate
-from ._vendor import toml
 from .log import get_logger
 
 # TODO: instrument get_* functions in main module with logging
@@ -136,14 +136,18 @@ def get_config_obj(app_name: str) -> Optional[Dict[str, Any]]:
         obj = json.loads(conf_file.read_text())
     elif conf_file.suffix == '.toml':
         log.debug(f'Loading config object from {conf_file}')
-        obj = toml.loads(conf_file.read_text())
+        vendor_path = Path(__file__).parent.joinpath('_vendor')
+        sys.path.append(str(vendor_path))
+        import toml
+        sys.path.remove(str(vendor_path))
+        obj = toml.loads(conf_file.read_text())  # type: ignore
     else:
         log.debug(
             f"Found config file {conf_file}. get_config_key "
             f"does not support config files of type {conf_file.suffix}. "
             "Only .toml, .ini and .json files are supported")
         return None
-    return obj
+    return obj  # type: ignore
 
 
 def get_config_key(app_name: str, key: str):
