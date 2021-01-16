@@ -16,9 +16,8 @@ import time
 
 from ._vendor.appdirs import AppDirs
 from ._vendor.decorator import decorate
-from .log import get_logger
-
-# TODO: instrument get_* functions in main module with logging
+from loguru import logger as log
+log.disable('si_utils')
 
 
 def _cache(func, *args, **kw):
@@ -43,7 +42,7 @@ def cache(f):
 
 
 @cache
-def get_config_file(app_name: str) -> Optional[Path]:
+def get_config_file(app_name: str, level='DEBUG') -> Optional[Path]:
     """
     Find a valid config file for a given app name.
     File can be stored in a site-wide directory (ex. /etc/xdg/si-utils)
@@ -56,12 +55,15 @@ def get_config_file(app_name: str) -> Optional[Path]:
     to a real directory, that directory will also be searched for a valid
     config file.
 
+    `level` sets the severity level of log messages if a valid config file
+    can't be found
+
     {app_name}_CONFIG_FILE is the preferred way to override the config file
     lookup procedure.
     SI_UTILS_CONFIG_PATH exists mainly for testing purposes
     """
-    log = get_logger(app_name)
     # define common constants
+    log.debug(f'Looking for a config file for app name "{app_name}"')
     valid_extensions = ['ini', 'yaml', 'json', 'toml']
     all_conf_files = []
     config_file_names = [f'{app_name}.{ext}' for ext in valid_extensions]
@@ -69,20 +71,35 @@ def get_config_file(app_name: str) -> Optional[Path]:
     # handle env vars
     env_var = f'{app_name.upper()}_CONFIG_FILE'
     env_var_file = os.environ.get(env_var)
-    if env_var_file and Path(env_var_file).exists():
+    if env_var_file:
+        log.debug(f'Env var "{env_var}" is set to "{env_var_file}".')
+        if Path(env_var_file).exists():
+            log.debug(
+                f'File "{env_var_file}" exists.')
+            return Path(env_var_file)
+        else:
+            log.debug(f'File "{env_var_file}" does not exist. Skipping it.')
+    else:
         log.debug(
-            f'Env var {env_var} is set and valid. '
-            f'Loading configuration from file {env_var_file}')
-        return Path(env_var_file)
+            f'Env var "{env_var}" not set. '
+            f'Proceeding with normal config file lookup.')
     env_var_path = os.environ.get('SI_UTILS_CONFIG_PATH')
-    if env_var_path and Path(env_var_path).is_dir():
+    if env_var_path:
+        log.debug(f'Env var "SI_UTILS_CONFIG_PATH" is set to {env_var_path}')
+        if Path(env_var_path).is_dir():
+            log.debug(
+                f'"{env_var_path}" exists. '
+                'Adding it to config file search path')
+            env_var_path_files = [
+                Path(env_var_path).joinpath(name) for name in config_file_names
+            ]
+            all_conf_files.extend(env_var_path_files)
+        else:
+            log.debug(f'"{env_var_path}" does not exist. Skipping it.')
+    else:
         log.debug(
-            f'Env var SI_UTILS_CONFIG_PATH is set and valid. '
-            f'Adding {env_var_path} to config file search path')
-        env_var_path_files = [
-            Path(env_var_path).joinpath(name) for name in config_file_names
-        ]
-        all_conf_files.extend(env_var_path_files)
+            'Env var "SI_UTILS_CONFIG_PATH" not set. '
+            'Proceeding with normal config file lookup.')
 
     # handle site config
     site_conf = Path(AppDirs('si-utils').site_config_dir)
@@ -105,7 +122,7 @@ def get_config_file(app_name: str) -> Optional[Path]:
         return None
     log.debug(
         f'Found the following config files: {valid_conf_files}.'
-        f'Using config file:: {valid_conf_files[0]}')
+        f'Using config file: {valid_conf_files[0]}')
     return valid_conf_files[0]
 
 
@@ -119,7 +136,6 @@ def get_config_obj(app_name: str) -> Optional[Dict[str, Any]]:
     keys in .ini files must be stored in the DEFAULT section
     only top-level keys in .json config files are supported
     """
-    log = get_logger(app_name)
     conf_file = get_config_file(app_name)
     if not conf_file:
         log.debug(f'Could not load config from file for app_name {app_name}')
@@ -158,7 +174,6 @@ def get_config_key(app_name: str, key: str):
     keys in .ini files must be stored in the DEFAULT section
     only top-level keys in .json config files are supported
     """
-    log = get_logger(app_name)
     env_var_name = f'{app_name.upper()}_{key.upper()}'
     env_var = os.environ.get(env_var_name)
     if env_var:

@@ -1,7 +1,7 @@
 from pathlib import Path
 import time
 
-from si_utils.main import lst, txt, get_config_file, \
+from si_utils import lst, txt, get_config_file, \
     get_config_obj, get_config_key, Timeit
 
 from _pytest.monkeypatch import MonkeyPatch

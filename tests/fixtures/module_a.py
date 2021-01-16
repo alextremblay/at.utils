@@ -1,8 +1,9 @@
-from si_utils.log import get_logger
+from loguru import logger
 
 from . import module_b
 
-logger = get_logger('app_a')
+
+logger.disable(__name__)
 logger.debug("module a import complete")
 
 

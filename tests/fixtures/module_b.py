@@ -1,6 +1,6 @@
-from si_utils.log import get_logger
+from loguru import logger
 
-logger = get_logger('app_b')
+logger.disable(__name__)
 logger.debug('module b loaded')
 
 
