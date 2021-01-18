@@ -103,6 +103,21 @@ pycodestyle = ">=2.6.0a1,<2.7.0"
 pyflakes = ">=2.2.0,<2.3.0"
 
 [[package]]
+name = "flake8-bugbear"
+version = "20.11.1"
+description = "A plugin for flake8 finding likely bugs and design problems in your program. Contains warnings that don't belong in pyflakes and pycodestyle."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+attrs = ">=19.2.0"
+flake8 = ">=3.0.0"
+
+[package.extras]
+dev = ["coverage", "black", "hypothesis", "hypothesmith"]
+
+[[package]]
 name = "immutables"
 version = "0.14"
 description = "Immutable Collections"
@@ -493,7 +508,7 @@ yaml = ["ruamel.yaml", "deepmerge", "pydantic"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6,<4.0"
-content-hash = "38466b21be9f4b87f87e80585d90620ef1fe2c716d1a0f710793cba4f9ad304a"
+content-hash = "40b28d358b8ca014409db7c2e89293f6c2051e205c2cea7b9f7a3c7e31d33a94"
 
 [metadata.files]
 aiocontextvars = [
@@ -534,6 +549,10 @@ deepmerge = [
 flake8 = [
     {file = "flake8-3.8.4-py2.py3-none-any.whl", hash = "sha256:749dbbd6bfd0cf1318af27bf97a14e28e5ff548ef8e5b1566ccfb25a11e7c839"},
     {file = "flake8-3.8.4.tar.gz", hash = "sha256:aadae8761ec651813c24be05c6f7b4680857ef6afaae4651a4eccaef97ce6c3b"},
+]
+flake8-bugbear = [
+    {file = "flake8-bugbear-20.11.1.tar.gz", hash = "sha256:528020129fea2dea33a466b9d64ab650aa3e5f9ffc788b70ea4bc6cf18283538"},
+    {file = "flake8_bugbear-20.11.1-py36.py37.py38-none-any.whl", hash = "sha256:f35b8135ece7a014bc0aee5b5d485334ac30a6da48494998cc1fabf7ec70d703"},
 ]
 immutables = [
     {file = "immutables-0.14-cp35-cp35m-macosx_10_14_x86_64.whl", hash = "sha256:860666fab142401a5535bf65cbd607b46bc5ed25b9d1eb053ca8ed9a1a1a80d6"},

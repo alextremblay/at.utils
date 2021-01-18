@@ -66,7 +66,7 @@ if __name__ == "__main__":
         logger.debug("I'm a debug message!")
         exit()
     try:
-        pass  # cli code goes here
+        app()  # cli code goes here
     except KeyboardInterrupt:
         print("Aborted!")
         exit()

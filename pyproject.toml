@@ -2,6 +2,7 @@
 name = "si_utils"
 version = "0.2.0"
 description = "an opinionated set of utilities designed to be easily included in any number of projects"
+readme = "README.md"
 authors = ["Alex Tremblay <alex.tremblay@utoronto.ca>", "University of Toronto"]
 license = "MIT"
 
@@ -26,6 +27,7 @@ pylint = "^2.6.0"
 mypy = "^0.790"
 flake8 = "^3.8.4"
 poethepoet = "^0.9.0"
+flake8-bugbear = "^20.11.1"
 
 [tool.poe.tasks]
 bump-version = {script = "si_utils.dev_utils:bump_version"}
