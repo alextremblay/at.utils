@@ -10,10 +10,10 @@ It's designed to be easy to include in other projects. all of its mainline depen
 pip install si-utils
 ```
 
-To make use of optional extras, like the yaml module or the log module:
+To make use of optional extras, like the yaml module or the dev_utils module:
 
 ```
-pip install si-utils[yaml] # or si-utils[log], or si-utils[yaml,log]
+pip install si-utils[yaml] # or si-utils[dev_utils], or si-utils[yaml,sentry]
 ```
 
 # Usage
