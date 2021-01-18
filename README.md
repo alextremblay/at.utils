@@ -23,14 +23,22 @@ In fact, the aim of this project is to make well-engineered CLIs almost as easy 
 it leverages a lot of really fantastic modern libraries and tools to do so, like *poetry*, *typer*, and *loguru*
 
 let's assume you've created a new project with `poetry new`, and you want to add a CLI interface to it. here's one way to do that:
-create a `__main__.py` file in your package like so:
+create a `common.py` files with your super handy dandy useful function in it:
+```python
+from loguru import logger
+
+def my_super_awesome_function():
+    logger.debug("I'm running my_package.common.my_super_awesome_function!")
+
 ```
+
+create a `__main__.py` file in your package like so:
+```python
 import os
 
 from .common import my_super_awesome_function
 
-from si_utils.main import ...
-from si_utils.log import configure_logging
+import si_utils
 import typer
 from loguru import logger
 
@@ -41,9 +49,10 @@ app = typer.Typer()
 def callback(verbose: bool = False):
     """
     Here is my app's main help string
+    Users will see this when they run `python -m my_package`
     """
     log_level = 'DEBUG' if verbose else 'INFO'
-    configure_logging(
+    si_utils.configure_logging(
         'my_app_name', 
         stderr_level=log_level, 
         logfile_level='DEBUG', 
@@ -52,6 +61,9 @@ def callback(verbose: bool = False):
 
 @app.command()
 def my_command(option: bool):
+    """
+    Here's the help text my users will see when they run `python -m my_package my-command -h`
+    """
     logger.debug("running my-command")  # this will only get printed if the --verbose flag is set
     my_super_awesome_function(option)
 
@@ -59,7 +71,7 @@ def my_command(option: bool):
 if __name__ == "__main__":
     if os.environ.get('PYDEBUG'):
         # we're in a debugger session
-        #here we can put whatever debugging code we want
+        # here we can put whatever debugging code we want
         # we can configure logging so all messages up to DEBUG are logged to stderr, and nothing gets logged to file:
         configure_logging('my_app_name', 'DEBUG', None, None)
         # do debugging stuff here
@@ -76,6 +88,8 @@ if __name__ == "__main__":
 the main api (all the stuff directly importable from `si_utils`) consists of:
 - every function defined in the `main` module
 - the `configure_logging` function from the `log` module
+
+`configure_logging` has an option to enable logging to sentry. in order to use it, you need to install si_utils with the `sentry` extra (ie `pip install si-utils[sentry]` or `poetry add -D si-utils[sentry]`)
 
 apart from that, there are other modules which can be imported separately:
 
