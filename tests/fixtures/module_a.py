@@ -1,6 +1,6 @@
 from loguru import logger
 
-from . import module_b
+from . import module_b, module_c
 
 
 logger.disable(__name__)
@@ -16,6 +16,7 @@ def doathing():
     logger.error("ohhhh bad")
     logger.critical("we're sinking captain!")
     module_b.func()
+    module_c.func()
 
 
 if __name__ == "__main__":

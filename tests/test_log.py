@@ -1,69 +1,98 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
-import logging
 
 from si_utils import configure_logging
+from si_utils.log import caploguru
 
 from .fixtures import module_a
 
-import pytest
 from loguru import logger
+import pytest
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
     from _pytest.capture import CaptureFixture
-    from _pytest.logging import LogCaptureFixture
+    from si_utils.log import CapLoguru
 
-
-@pytest.fixture
-def caploguru(caplog):
-    class PropogateHandler(logging.Handler):
-        def emit(self, record):
-            logging.getLogger(record.name).handle(record)
-
-    handler_id = logger.add(PropogateHandler(), format="{message} {extra}")
-    yield caplog
-    logger.remove(handler_id)
+caploguru = pytest.fixture(caploguru)
 
 
 def test_configure_logging(
-        tmp_path: Path,
-        monkeypatch: 'MonkeyPatch',
-        capsys: 'CaptureFixture',
-        caplog: 'LogCaptureFixture'
-        ):
+    tmp_path: Path,
+    monkeypatch: "MonkeyPatch",
+    capsys: "CaptureFixture",
+    caploguru: 'CapLoguru',
+):
 
     # logger should start disabled
     module_a.doathing()
-    assert caplog.text == ''
 
     # logging by default is a no-op, unless and until logging is enabled.
     # no log file should exist yet
     assert len(list(tmp_path.iterdir())) == 0
-    configure_logging('test', 'DEBUG', None, None, {'colorize': False})
+    configure_logging(
+        app_name="test",
+        stderr_level="DEBUG",
+        logfile_level=None,
+        sentry_level=None,
+        stderr_opts={"colorize": False},
+        attach_stdlib_logger=True,
+    )
+    caploguru.add_handler()
     # test basic configuration
-    logger.info('When `logfile_level` is None, no file logging should occur')
+    logger.info("When `logfile_level` is None, no file logging should occur")
     assert len(list(tmp_path.iterdir())) == 0
 
     # test sys.stderr sink
-    assert 'When `logfile_level` is None, no file logging should occur' \
+    assert (
+        "When `logfile_level` is None, no file logging should occur"
         in capsys.readouterr().err
+    )
 
     # test file logging
     # override the default log dir
-    monkeypatch.setenv('DEFAULT_LOG_DIR', str(tmp_path))
-    configure_logging('test', 'DEBUG', 'DEBUG', None, {'colorize': False})
+    monkeypatch.setenv("DEFAULT_LOG_DIR", str(tmp_path))
+    configure_logging(
+        app_name="test",
+        stderr_level="DEBUG",
+        logfile_level="DEBUG",
+        sentry_level=None,
+        stderr_opts={"colorize": False},
+    )
+    caploguru.add_handler()
     module_a.doathing()
     with logger.catch():
         1 / 0
-    logfile = tmp_path.joinpath('test.log')
+    logfile = tmp_path.joinpath("test.log")
 
     # test logfile output
     assert logfile.exists()
     logfile_output = logfile.read_text()
-    assert 'This is a TRACE message' not in logfile_output, \
-        "default file log level should not capture TRACE messages"
-    assert 'This is a DEBUG message' in logfile_output, \
-        "default file log level should capture DEBUG messages"
-    assert 'An error has been caught in function' in logfile_output, \
-        "log file should collect exception messages"
+    assert (
+        "This is a TRACE message" not in logfile_output
+    ), "default file log level should not capture TRACE messages"
+    assert (
+        "This is a DEBUG message" in logfile_output
+    ), "default file log level should capture DEBUG messages"
+    assert (
+        "An error has been caught in function" in logfile_output
+    ), "log file should collect exception messages"
+
+
+def test_attach_stdlib_logging(
+    tmp_path: Path,
+    monkeypatch: "MonkeyPatch",
+    capsys: "CaptureFixture",
+    caploguru: 'CapLoguru',
+):
+    configure_logging(
+        app_name="test",
+        stderr_level="DEBUG",
+        logfile_level=None,
+        sentry_level=None,
+        stderr_opts={"colorize": False},
+        attach_stdlib_logger=True,
+    )
+    caploguru.add_handler()
+    module_a.doathing()
+    assert True
