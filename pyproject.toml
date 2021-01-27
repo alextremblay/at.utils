@@ -8,13 +8,13 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.6,<4.0"
-loguru = {version = "^0.5"}
+loguru = {version = "*"}
 sentry-sdk = {version = "^0.19", optional = true}
-"ruamel.yaml" = {version = "^0.16", optional = true}
-deepmerge = {version = "^0.1", optional = true}
-pydantic = {version = "^1", optional = true}
-tomlkit = {version = "^0.7.0", optional = true}
-semver = {version = "^2.13.0", optional = true}
+"ruamel.yaml" = {version = "*", optional = true}
+deepmerge = {version = "*", optional = true}
+pydantic = {version = "*", optional = true}
+tomlkit = {version = "*", optional = true}
+semver = {version = "*", optional = true}
 
 [tool.poetry.extras]
 sentry = ["sentry-sdk"]
@@ -28,22 +28,29 @@ mypy = "^0.790"
 flake8 = "^3.8.4"
 poethepoet = "^0.9.0"
 flake8-bugbear = "^20.11.1"
+vendy = "^0.0.2"
 
 [tool.poe.tasks]
-bump-version = {script = "si_utils.dev_utils:bump_version"}
-upgrade-vendored-deps = {shell = """\
-    cd si_utils/_vendor; \
-    pip install -U -t . appdirs boltons decorator toml; \
-    """}
-sudo-install = {shell = """\
-    rm -f dist/*; \
-	poetry build; \
-	sudo /usr/local/bin/pip3 install dist/*.whl; \
-    """}
-publish = {shell = """\
-    git push --follow-tags; \
-    poetry build; \
-    poetry publish"""}
+bump-version.script = "si_utils.dev_utils:bump_version"
+upgrade-vendored-deps.shell = "vendy"
+sudo-install.shell = """\
+    rm -f dist/*
+	poetry build
+	sudo /usr/local/bin/pip3 install dist/*.whl
+    """
+publish.shell = """\
+    git push --follow-tags
+    poetry build
+    poetry publish"""
+
+[tool.vendy]
+target = 'si_utils'
+packages = [
+    "appdirs>=1.4",
+    "decorator>=4.4",
+    "boltons>=20",
+    "toml>=0.10",
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

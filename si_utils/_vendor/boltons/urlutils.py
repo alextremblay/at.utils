@@ -1506,7 +1506,7 @@ class OrderedMultiDict(dict):
 
 try:
     # try to import the built-in one anyways
-    from boltons.dictutils import OrderedMultiDict
+    from si_utils._vendor.boltons.dictutils import OrderedMultiDict
 except ImportError:
     pass
 

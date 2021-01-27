@@ -51,7 +51,7 @@ except Exception:
             pass
 
 try:
-    from boltons.typeutils import make_sentinel
+    from si_utils._vendor.boltons.typeutils import make_sentinel
     _MISSING = make_sentinel(var_name='_MISSING')
     _KWARG_MARK = make_sentinel(var_name='_KWARG_MARK')
 except ImportError:
