@@ -275,22 +275,43 @@ def get_cache_dir(app_name: str) -> Path:
     create and return a cache dir for cache data.
     prefer system-wide data dir, fall back to user cache dir
     """
-    env_var_file = os.environ.get(f"{app_name.upper()}_CACHE_PATH")
-    if env_var_file:
+    env_var_path = os.environ.get(f"{app_name.upper()}_CACHE_PATH")
+    site_cache_env_var = "SI_UTILS_SITE_CACHE"
+    user_cache_env_var = "SI_UTILS_USER_CACHE"
+    if env_var_path:
         try:
-            path = Path(env_var_file)
+            path = Path(env_var_path)
             path.mkdir(parents=True, exist_ok=True)
             return path
         except OSError:
             pass
-    system_cache_dir = Path(AppDirs("si-utils").site_data_dir)
+
+    system_cache_dir: Path
+    system_cache_dir = os.environ.get(site_cache_env_var)  # type: ignore
+    if system_cache_dir:
+        system_cache_dir = Path(system_cache_dir)
+        log.debug(
+            f"Env var {site_cache_env_var} is set. "
+            "Adding it to the config file search path"
+        )
+    else:
+        system_cache_dir = Path(AppDirs("si-utils").site_data_dir)
     system_cache_dir = system_cache_dir.joinpath(app_name)
     try:
         system_cache_dir.mkdir(parents=True, exist_ok=True)
         return system_cache_dir
     except OSError:
         pass
-    user_cache_dir = Path(AppDirs("si-utils").user_cache_dir)
+    user_cache_dir: Path
+    user_cache_dir = os.environ.get(user_cache_env_var)  # type: ignore
+    if user_cache_dir:
+        user_cache_dir = Path(user_cache_dir)
+        log.debug(
+            f"Env var {user_cache_env_var} is set. "
+            "Adding it to the config file search path"
+        )
+    else:
+        user_cache_dir = Path(AppDirs("si-utils").user_cache_dir)
     user_cache_dir = user_cache_dir.joinpath(app_name)
     try:
         user_cache_dir.mkdir(parents=True, exist_ok=True)

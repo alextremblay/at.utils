@@ -7,13 +7,6 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 
-def clear_caches():
-    "clear the caches of all cached functions in si_utils.main"
-    for f in main.__dict__.values():
-        if callable(f) and hasattr(f, 'cache'):
-            f.cache = {}
-
-
 def test_txt():
     res = main.txt("""
         one
@@ -32,19 +25,6 @@ def test_lst():
         three
         """)
     assert res == ['one', 'two', 'three']
-
-
-@pytest.fixture
-def config_dirs(tmp_path: Path, monkeypatch: MonkeyPatch):
-    "sets up get_config_file to search a specific set of tmp folders"
-    site_conf = tmp_path.joinpath('site_config')
-    site_conf.mkdir()
-    user_conf = tmp_path.joinpath('user_config')
-    user_conf.mkdir()
-    monkeypatch.setenv("SI_UTILS_SITE_CONFIG", str(site_conf))
-    monkeypatch.setenv("SI_UTILS_USER_CONFIG", str(user_conf))
-    yield tmp_path
-    clear_caches()
 
 
 def test_get_config_file(config_dirs: Path, monkeypatch: MonkeyPatch):

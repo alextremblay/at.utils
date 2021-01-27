@@ -2,19 +2,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from si_utils import configure_logging
-from si_utils.log import caploguru
 
 from .fixtures import module_a
 
 from loguru import logger
-import pytest
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
     from _pytest.capture import CaptureFixture
-    from si_utils.log import CapLoguru
-
-caploguru = pytest.fixture(caploguru)
+    from si_utils.dev_utils import CapLoguru
 
 
 def test_configure_logging(

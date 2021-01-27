@@ -212,29 +212,3 @@ def configure_logging(
         extra={"app_name": app_name},
         activation=[("", True)],  # enable logging for all modules
     )
-
-
-class CapLoguru:
-    def __init__(self) -> None:
-        self.logs: Dict[str, list] = {}
-        self.handler_id = None
-
-    def emit(self, msg):
-        level = msg.record["level"].name
-        if not self.logs.get(level):
-            self.logs[level] = []
-        self.logs[level].append(msg)
-
-    def add_handler(self):
-        self.handler_id = log.add(self.emit, level="DEBUG")
-
-    def remove_handler(self):
-        if not self.handler_id:
-            return  # noop
-        log.remove(self.handler_id)
-
-
-def caploguru():
-    fixture = CapLoguru()
-    yield fixture
-    fixture.remove_handler()

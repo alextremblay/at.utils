@@ -1,10 +1,19 @@
+from si_utils import main
 from subprocess import run, PIPE
 import sys
 from pathlib import Path
+from typing import Dict, TYPE_CHECKING
+from types import ModuleType
+
+from loguru import logger as log
+
+if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
 
 try:
     import tomlkit
     import semver
+    import pytest
 except ImportError:
     raise ImportError(
         "In order to use this module, the si-utils package must be installed "
@@ -55,3 +64,53 @@ def bump_version():
     run(["git", "commit", "-m", f"bump version from {old_version} to {new_version}"])
     run(["git", "tag", "-s", "-a", new_version, "-m", f"version {new_version}"])
     print("done")
+
+
+class CapLoguru:
+    def __init__(self) -> None:
+        self.logs: Dict[str, list] = {}
+        self.handler_id = None
+
+    def emit(self, msg):
+        level = msg.record["level"].name
+        if not self.logs.get(level):
+            self.logs[level] = []
+        self.logs[level].append(msg)
+
+    def add_handler(self):
+        self.handler_id = log.add(self.emit, level="DEBUG")
+
+    def remove_handler(self):
+        if not self.handler_id:
+            return  # noop
+        log.remove(self.handler_id)
+
+
+@pytest.fixture
+def caploguru():
+    fixture = CapLoguru()
+    yield fixture
+    fixture.remove_handler()
+
+
+def clear_caches(module: ModuleType):
+    "clear the caches of all cached functions in a given module"
+    for f in module.__dict__.values():
+        if callable(f) and hasattr(f, "cache"):
+            f.cache = {}
+
+
+@pytest.fixture
+def config_dirs(tmp_path: Path, monkeypatch: 'MonkeyPatch'):
+    "sets up get_config_file to search a specific set of tmp folders"
+    site_conf = tmp_path.joinpath("site_config")
+    site_conf.mkdir()
+    user_conf = tmp_path.joinpath("user_config")
+    user_conf.mkdir()
+    site_cache = tmp_path.joinpath("site_cache")
+    site_cache.mkdir()
+    monkeypatch.setenv("SI_UTILS_SITE_CONFIG", str(site_conf))
+    monkeypatch.setenv("SI_UTILS_USER_CONFIG", str(user_conf))
+    monkeypatch.setenv("SI_UTILS_SITE_CACHE", str(site_cache))
+    yield tmp_path
+    clear_caches(main)
