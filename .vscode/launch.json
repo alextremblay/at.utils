@@ -5,14 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Module: test",
+            "name": "Debug Tests",
             "type": "python",
-            "request": "launch",
-            "module": "si_utils.test",
+            "request": "test",
             "console": "integratedTerminal",
-            "env": {
-                "PYDEBUG": "1"
-            },
             "justMyCode": false
         },
         {
