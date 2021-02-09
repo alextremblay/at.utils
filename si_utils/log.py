@@ -10,11 +10,9 @@ from loguru import logger as log
 
 log.disable("si_utils")
 
-STDERR_FORMAT = "<green>{time:MM-DD HH:mm}</> | <blue>{extra[app_name]}</> | \
-    <level>{level.name: ^9}</> | <bold>{message}</>"
+STDERR_FORMAT = "<blue>{extra[app_name]}</> | <level>{level.name:8}</>| <bold>{message}</>"  # noqa
 
-LOGFILE_FORMAT = "{time:MM-DD HH:mm} | {level.name: ^8} | {message} \n\
-    Data: {extra}"
+LOGFILE_FORMAT = "{time:MM-DD HH:mm} | {level.name: ^8} | {message} \nData: {extra}"
 
 DEFAULT_LOG_DIR = "/var/log/si-utils"
 

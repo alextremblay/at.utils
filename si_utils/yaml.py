@@ -1,7 +1,8 @@
 from io import StringIO
 from typing import Iterator, Optional, Sequence, Tuple, Union, Pattern
-from functools import lru_cache
 import re
+
+from .main import cache
 
 try:
     import ruamel.yaml
@@ -41,7 +42,7 @@ def re_rpartition(regex: Pattern, s: str):
         return ('', '', s)
 
 
-@lru_cache()
+@cache
 def yaml():
     y = ruamel.yaml.YAML()
     y.indent(mapping=2, sequence=4, offset=2)

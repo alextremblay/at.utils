@@ -1,0 +1,10 @@
+strictness: medium
+test-warnings: true
+
+autodetect: false
+
+max-line-length: 120
+
+pep8:
+  disable:
+    - N815

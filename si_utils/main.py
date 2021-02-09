@@ -85,8 +85,8 @@ def get_config_file_or_fail(app_name: str) -> Path:
         if Path(env_var_file).exists():
             log.debug(f'File "{env_var_file}" exists.')
             return Path(env_var_file)
-        else:
-            log.debug(f'File "{env_var_file}" does not exist. Skipping it.')
+        # else:
+        log.debug(f'File "{env_var_file}" does not exist. Skipping it.')
     else:
         log.debug(
             f'Env var "{env_var}" not set. '
@@ -132,7 +132,7 @@ def get_config_file_or_fail(app_name: str) -> Path:
         return valid_conf_files[0]
     # handle failure
     raise Exception(
-        f"Could not find a valid config file for app_name {app_name}. "
+        f"Could not find a valid config file for `app_name` {app_name}. "
         f"Searched for files {config_file_names} in folders {site_conf} "
         f"and {user_conf}, found nothing"
     )
@@ -189,7 +189,7 @@ def get_config_obj_or_fail(app_name: str) -> Dict[str, Any]:
         obj = dict(toml.loads(conf_file.read_text()))  # type: ignore
     else:
         raise Exception(
-            f"Found config file {conf_file}. get_config_key "
+            f"Found config file {conf_file}. `get_config_key` "
             f"does not support config files of type {conf_file.suffix}. "
             "Only .toml, .ini and .json files are supported"
         )
