@@ -34,7 +34,7 @@ prospector = "*"
 pytest-forked = "*"
 
 [tool.poe.tasks]
-test.cmd = "pytest --cov"
+cov.cmd = "pytest --cov-report xml:cov.xml --cov-report term-missing --cov"
 bump-version.script = "si_utils.dev_utils:bump_version"
 vendor.shell = "vendy"
 sudo-install.shell = """\
