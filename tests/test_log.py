@@ -17,7 +17,7 @@ def test_configure_logging(
     tmp_path: Path,
     monkeypatch: "MonkeyPatch",
     capsys: "CaptureFixture",
-    caploguru: 'CapLoguru',
+    caploguru_manual: 'CapLoguru',
 ):
 
     # logger should start disabled
@@ -34,7 +34,7 @@ def test_configure_logging(
         stderr_opts={"colorize": False},
         attach_stdlib_logger=True,
     )
-    caploguru.add_handler()
+    caploguru_manual.add_handler()
     # test basic configuration
     logger.info("When `logfile_level` is None, no file logging should occur")
     assert len(list(tmp_path.iterdir())) == 0
@@ -45,7 +45,13 @@ def test_configure_logging(
         in capsys.readouterr().err
     )
 
-    # test file logging
+
+def test_configure_logging_file_handling(
+    tmp_path: Path,
+    monkeypatch: "MonkeyPatch",
+    capsys: "CaptureFixture",
+    caploguru_manual: 'CapLoguru',
+):
     # override the default log dir
     monkeypatch.setenv("DEFAULT_LOG_DIR", str(tmp_path))
     configure_logging(
@@ -55,7 +61,7 @@ def test_configure_logging(
         sentry_level=None,
         stderr_opts={"colorize": False},
     )
-    caploguru.add_handler()
+    caploguru_manual.add_handler()
     module_a.doathing()
     with logger.catch():
         1 / 0

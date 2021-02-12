@@ -1,15 +1,18 @@
+from si_utils.log import configure_logging
 from si_utils import main
 from subprocess import run, PIPE
 import sys
 from pathlib import Path
-from typing import Dict, List, TYPE_CHECKING
+from typing import Callable, Dict, List, TYPE_CHECKING
 from types import ModuleType
 import inspect
+import re
 
 import loguru
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
+    from _pytest.fixtures import FixtureRequest
 
 try:
     import tomlkit
@@ -62,24 +65,31 @@ def bump_version():
     Path("pyproject.toml").write_text(tomlkit.dumps(pyproject))
     init_file.write_text(init_text)
     run(["git", "add", "."], check=True)
-    run(["git", "commit", "-m", f"bump version from {old_version} to {new_version}"], check=True)
-    run(["git", "tag", "-s", "-a", new_version, "-m", f"version {new_version}"], check=True)
+    run(
+        ["git", "commit", "-m", f"bump version from {old_version} to {new_version}"],
+        check=True,
+    )
+    run(
+        ["git", "tag", "-s", "-a", new_version, "-m", f"version {new_version}"],
+        check=True,
+    )
     print("done")
 
 
 class CapLoguru:
     def __init__(self) -> None:
-        self.logs: Dict[str, List['loguru.Message']] = {}
+        self.logs: Dict[str, List["loguru.Message"]] = {}
         self.handler_id = None
 
-    def emit(self, msg: 'loguru.Message'):
+    def emit(self, msg: "loguru.Message"):
         level = msg.record["level"].name
         if not self.logs.get(level):
             self.logs[level] = []
         self.logs[level].append(msg)
 
     def add_handler(self):
-        self.handler_id = loguru.logger.add(self.emit, level="DEBUG")
+        fmt = "{name}:{function}:{line} - {message}"
+        self.handler_id = loguru.logger.add(self.emit, level="DEBUG", format=fmt)
 
     def remove_handler(self):
         if not self.handler_id:
@@ -93,25 +103,26 @@ class CapLoguru:
 
     def string_in_log_level(self, level, string_partial):
         """
-        Assert that a log line of the given log level contains the string
+        Assert that the given log level contains the string
         """
         if not self.logs[level]:
             return False
-        for line in self.logs[level]:
-            if string_partial in line:
-                return True
+
+        log = "\n".join(self.logs[level])
+        if string_partial in log:
+            return True
         # else:
         return False
 
     def line_in_log_level(self, level, match_line):
         """
-        Assert that a log line of the given log level matches the given line
+        Assert that a log line of the given log level matches the given regex `match_line`
         """
         if not self.logs[level]:
             return False
-        for log_line in self.logs[level]:
-            if log_line == match_line:
-                return True
+        log = "\n".join(self.logs[level])
+        if re.search(match_line, log, re.MULTILINE):
+            return True
         # else:
         return False
 
@@ -119,34 +130,28 @@ class CapLoguru:
         """
         Assert that a log line of any log level contains the string
         """
-        for line in self.all_logs():
-            if string_partial in line:
-                return True
+        log = "\n".join(self.all_logs())
+        if string_partial in log:
+            return True
         # else:
         return False
 
     def line_in_log(self, match_line):
         """
-        Assert that a log line of any log level contains the string
+        Assert that a log line of any log level matches the given regex `match_line`
         """
-        for line in self.all_logs():
-            if line == match_line:
-                return True
+        log = "\n".join(self.all_logs())
+        if re.search(match_line, log, re.MULTILINE):
+            return True
         # else:
         return False
-
-@pytest.fixture()
-def caploguru():
-    fixture = CapLoguru()
-    yield fixture
-    fixture.remove_handler()
 
 
 def clear_caches(module: ModuleType):
     """
     clear all caches in a given module
-    
-    clear the caches of all cached functions and all cached classmethods 
+
+    clear the caches of all cached functions and all cached classmethods
     and staticmethods of all classes in a given module
     """
 
@@ -159,42 +164,24 @@ def clear_caches(module: ModuleType):
             # static methods
             for _, static_method in inspect.getmembers(class_, inspect.isfunction):
                 yield static_method
-            
+
             # class methods
             for _, class_method in inspect.getmembers(class_, inspect.ismethod):
                 yield class_method
-    
+
     for cacheable in get_cachables():
-        if hasattr(cacheable, 'cache'):
+        if hasattr(cacheable, "cache"):
             cacheable.cache = {}
 
-
-@pytest.fixture
-def config_dirs(tmp_path: Path, monkeypatch: 'MonkeyPatch'):
-    """
-    sets up get_config_file to search a specific set of tmp folders
-    
-    Deprecated: use mock_si_utils_paths instead
-    """
-    site_conf = tmp_path.joinpath("site_config")
-    site_conf.mkdir()
-    user_conf = tmp_path.joinpath("user_config")
-    user_conf.mkdir()
-    site_cache = tmp_path.joinpath("site_cache")
-    site_cache.mkdir()
-    monkeypatch.setenv("SI_UTILS_SITE_CONFIG", str(site_conf))
-    monkeypatch.setenv("SI_UTILS_USER_CONFIG", str(user_conf))
-    monkeypatch.setenv("SI_UTILS_SITE_CACHE", str(site_cache))
-    yield tmp_path
-    clear_caches(main)
 
 class SIUtilsPaths:
     site_conf: Path
     user_conf: Path
     site_cache: Path
     log_dir: Path
+    cache_dir: Path
 
-    def __init__(self, mock_path: Path) -> None:
+    def __init__(self, mock_path: Path, app_name: str) -> None:
         self.site_conf = mock_path.joinpath("site_config")
         self.site_conf.mkdir()
         self.user_conf = mock_path.joinpath("user_config")
@@ -203,36 +190,110 @@ class SIUtilsPaths:
         self.site_cache.mkdir()
         self.log_dir = mock_path.joinpath("log_dir")
         self.log_dir.mkdir()
+        self.app_name = app_name
+        self.cache_dir = self.site_cache.joinpath(app_name)
+        self.cache_dir.mkdir()
 
-    def set_config_toml(self, app_name: str, conf_str: str):
-        self.site_conf.joinpath(f'{app_name}.toml').write_text(main.txt(conf_str))
+    def set_config_file(self, ext, conf_str):
+        self.site_conf.joinpath(f"{self.app_name}.{ext}").write_text(main.txt(conf_str))
 
-    def set_config_yaml(self, app_name: str, conf_str: str):
-        self.site_conf.joinpath(f'{app_name}.yaml').write_text(main.txt(conf_str))
+    def set_config_toml(self, conf_str: str):
+        self.set_config_file("toml", conf_str)
 
-    def set_config_json(self, app_name: str, conf_str: str):
-        self.site_conf.joinpath(f'{app_name}.json').write_text(main.txt(conf_str))
+    def set_config_yaml(self, conf_str: str):
+        self.set_config_file("yaml", conf_str)
 
-    def set_config_ini(self, app_name: str, conf_str: str):
-        self.site_conf.joinpath(f'{app_name}.ini').write_text(main.txt(conf_str))
+    def set_config_json(self, conf_str: str):
+        self.set_config_file("json", conf_str)
+
+    def set_config_ini(self, conf_str: str):
+        self.set_config_file("ini", conf_str)
 
 
 @pytest.fixture
-def mock_si_utils_paths(tmp_path: Path, monkeypatch: 'MonkeyPatch'):
+def mock_si_utils_paths(
+    tmp_path: Path,
+    monkeypatch: "MonkeyPatch",
+) -> Callable[..., SIUtilsPaths]:
     """
-    mocks all paths returned by functions in si_utils to point to subfolders of a pytest tmp_path
-    
-    Deprecated: use mock_si_utils_paths instead
+    Returns a function that Monkeypatches various SI_UTILS_* env vars to point to a set of tmp folders.
+    The return value of that function is a `SIUtilsPaths` fixture with attributes pointing to these folders,
+
+    Recommended to wrap this fixture in a custom fixture of your own
+
+    Example:
+        ```python
+        # conftest.py
+        from si_utils.dev_utils import mock_si_utils_paths, SIUtilsPaths
+
+        @pytest.fixture
+        def mock_config(mock_si_utils_paths) -> SIUtilsPaths:
+            return mock_si_utils_paths("my-app-name")
+        ```
     """
-    # set up
-    paths = SIUtilsPaths(tmp_path)
-    monkeypatch.setenv("SI_UTILS_SITE_CONFIG", str(paths.site_conf))
-    monkeypatch.setenv("SI_UTILS_USER_CONFIG", str(paths.user_conf))
-    monkeypatch.setenv("SI_UTILS_SITE_CACHE", str(paths.site_cache))
-    monkeypatch.setenv("DEFAULT_LOG_DIR", str(paths.log_dir))
 
-    # run tests
-    yield paths
+    def fixture_func(app_name: str):
+        # set up
+        paths = SIUtilsPaths(tmp_path, app_name)
 
-    # clean up
-    clear_caches(main)
+        # Mock out Env Vars to override file lookup paths
+        monkeypatch.setenv("SI_UTILS_SITE_CONFIG", str(paths.site_conf))
+        monkeypatch.setenv("SI_UTILS_USER_CONFIG", str(paths.user_conf))
+        monkeypatch.setenv("SI_UTILS_SITE_CACHE", str(paths.site_cache))
+        monkeypatch.setenv("DEFAULT_LOG_DIR", str(paths.log_dir))
+
+        # Disable caching on all functions in main
+        for name, func in inspect.getmembers(main, inspect.isfunction):
+            if hasattr(func, "cache"):
+                wrapped_func = getattr(func, "__wrapped__")
+                monkeypatch.setattr(main, name, wrapped_func)
+
+        # run tests
+        return paths
+
+    return fixture_func
+
+
+@pytest.fixture
+def caploguru_manual(request: "FixtureRequest") -> CapLoguru:
+    """Return a CapLoguru instance that can be attached to loguru.logger
+
+    After si_utils.configure_logging has been called, call this fixture's
+    `add_handler()` method to start collecting logs
+
+    This fixture is only necessary if you need to configure loguru directly.
+    If you just want to be able to collect logs and make assertions on them,
+    use the `caploguru_base` fixture instead.
+    """
+    fixture = CapLoguru()
+    request.addfinalizer(fixture.remove_handler)
+
+    return fixture
+
+
+@pytest.fixture
+def caploguru_base(caploguru_manual: CapLoguru) -> Callable[..., CapLoguru]:
+    """
+    Returns a function to configure and return a CapLoguru instance
+
+    Use this if you want to collect logs in your tests and make assertions on those logs
+
+    Recommended to wrap this fixture in a custom fixture of your own
+
+    Example:
+        ```python
+        # conftest.py
+        from si_utils.dev_utils import caploguru_base, CapLoguru
+
+        @pytest.fixture
+        def caploguru(caploguru_base) -> CapLoguru:
+            return caploguru_base("my-app-name")
+        ```
+    """
+
+    def fixture_func(app_name: str):
+        configure_logging(app_name, None, None, None)
+        caploguru_manual.add_handler()
+        return caploguru_manual
+
+    return fixture_func

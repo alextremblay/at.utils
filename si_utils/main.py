@@ -185,7 +185,6 @@ def get_config_obj_or_fail(app_name: str) -> Dict[str, Any]:
     elif conf_file.suffix == ".json":
         obj = dict(json.loads(conf_file.read_text()))
     elif conf_file.suffix == ".toml":
-        log.debug(f"Loading config object from {conf_file}")
         obj = dict(toml.loads(conf_file.read_text()))  # type: ignore
     else:
         raise Exception(
@@ -242,13 +241,16 @@ def get_config_key_or_fail(app_name: str, key: str):
             "loading config file"
         )
         return env_var
-
+    log.debug(
+        f"Env var {env_var_name} is not set, searching for key {key} in config object"
+    )
     obj = get_config_obj_or_fail(app_name)
 
     val = obj.get(key)
     if not val:
         raise KeyError(f"Could not find key {key} in config object {obj}")
 
+    log.debug(f"Found key {key} in config object")
     return val
 
 

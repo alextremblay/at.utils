@@ -9,7 +9,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = ">=3.6,<4.0"
 loguru = {version = "*"}
-sentry-sdk = {version = "^0.19", optional = true}
+sentry-sdk = {version = "*", optional = true}
 "ruamel.yaml" = {version = "*", optional = true}
 deepmerge = {version = "*", optional = true}
 pydantic = {version = "*", optional = true}
@@ -23,10 +23,10 @@ yaml = ["ruamel.yaml", "deepmerge", "pydantic"]
 dev-utils = ["tomlkit", "semver", "pytest"]
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
-mypy = "^0.790"
-flake8 = "^3.8.4"
-poethepoet = "^0.9.0"
+pytest = "*"
+mypy = "*"
+flake8 = "*"
+poethepoet = "*"
 flake8-bugbear = "*"
 vendy = "*"
 pytest-cov = "*"
