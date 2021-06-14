@@ -10,7 +10,7 @@ if __name__ == "__main__":
     if os.environ.get('PYDEBUG'):
         # we're in a debugger session
         from . import dev_utils # noqa
-        #sys.argv = [__file__, 'minor']
+        sys.argv = [__file__, '--ignore-status']
         dev_utils.bump_version()
         sys.exit()
     try:

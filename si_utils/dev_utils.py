@@ -37,15 +37,20 @@ def bump_version():
     semver_bump_types = ["major", "minor", "patch", "prerelease", "build"]
     parser = argparse.ArgumentParser()
     parser.add_argument('bump_type', choices=semver_bump_types, default="patch", nargs='?')
-    parser.add_argument('--no-sign', action='store_true')
+    parser.add_argument('--no-sign', action='store_true', help="don't force signed commits")
+    parser.add_argument(
+        '--ignore-status', action='store_true', 
+        help="ignore output of git status, proceed with unclean directory tree"
+    )
     args = parser.parse_args()
-    git_status = run(["git", "status"], stdout=PIPE, check=True).stdout.decode()
-    if "nothing to commit, working tree clean" not in git_status:
-        print(
-            "git working tree not clean. aborting. run `git status` and commit"
-            " or ignore all outstanding files, then try again."
-        )
-        sys.exit(1)
+    if not args.ignore_status:
+        git_status = run(["git", "status"], stdout=PIPE, check=True).stdout.decode()
+        if "nothing to commit, working tree clean" not in git_status:
+            print(
+                "git working tree not clean. aborting. run `git status` and commit"
+                " or ignore all outstanding files, then try again."
+            )
+            sys.exit(1)
     pyproject = tomlkit.parse(Path("pyproject.toml").read_text())
     package_name = pyproject["tool"]["poetry"]["name"]  # type: ignore
     old_version = pyproject["tool"]["poetry"]["version"]  # type: ignore
@@ -61,7 +66,7 @@ def bump_version():
     ver_strings_in_init_text = list(filter(lambda l: '__version__ =' in l, init_text.splitlines()))
     if len(ver_strings_in_init_text) > 0:
         old_ver_string = ver_strings_in_init_text[0]
-        init_text.replace(
+        init_text = init_text.replace(
             old_ver_string, f"__version__ = '{new_version}'"
         )
 
