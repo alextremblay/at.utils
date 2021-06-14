@@ -1,9 +1,11 @@
 import sys
 import os
 from pathlib import Path
-from typing import Callable, List, Optional, Dict
+from typing import Callable, List, Optional
 from getpass import getuser
 import logging
+import logging.handlers
+import platform
 
 from ._vendor.appdirs import user_log_dir
 from loguru import logger as log
@@ -12,7 +14,9 @@ log.disable("si_utils")
 
 STDERR_FORMAT = "<blue>{extra[app_name]}</> | <level>{level.name:8}</>| <bold>{message}</>"  # noqa
 
-LOGFILE_FORMAT = "{time:MM-DD HH:mm} | {level.name: ^8} | {message} \nData: {extra}"
+LOGFILE_FORMAT = "{time:MM-DD HH:mm} | {name}:{function}:{line} - {level.name: ^8} | {message} \nData: {extra}"
+
+SYSLOG_FORMAT = "{extra[app_name]} | {name}:{function}:{line} - {level.name: ^8} | {message} | Data: {extra}"  # noqa
 
 DEFAULT_LOG_DIR = "/var/log/si-utils"
 
@@ -40,7 +44,7 @@ def get_sentry_sink(app_name: str) -> Optional[Callable]:
         return None
 
     # import here to avoid circular dependency
-    from .main import get_config_key_or_none
+    from .main import get_config_key_or_none  # noqa
 
     sentry_dsn = get_config_key_or_none("shared", "sentry_dsn")
     if not sentry_dsn:
@@ -52,7 +56,7 @@ def get_sentry_sink(app_name: str) -> Optional[Callable]:
         return None
 
     try:
-        import sentry_sdk
+        import sentry_sdk # noqa
     except ImportError:
         log.debug(
             "the sentry_sdk package is not installed. Sentry logging disabled."
@@ -64,7 +68,7 @@ def get_sentry_sink(app_name: str) -> Optional[Callable]:
     # project for all your apps, and want to group all your alerts
     # into issues by app name
 
-    def before_send(event, hint):
+    def before_send(event, hint): # noqa
         # group all sentry events by app name
         if event.get("exception"):
             exc_type = event["exception"]["values"][0]["type"]
@@ -130,22 +134,22 @@ def get_logfile_sink(app_name: str) -> Optional[Path]:
                     f"Will write to {backup_log_file} instead."
                 )
                 return get_log_file(backup=True)
-            else:
-                log.error(
-                    f"Unable to write logs to log file {log_file} or "
-                    f"to alternate log file {backup_log_file}. "
-                    "Skipping file logging."
-                )
-                return None
+            #else:
+            log.error(
+                f"Unable to write logs to log file {log_file} or "
+                f"to alternate log file {backup_log_file}. "
+                "Skipping file logging."
+            )
+            return None
 
     log_file = get_log_file()
     if log_file:
         return log_file
-    else:
-        return None
+    #else:
+    return None
 
 
-def configure_logging(
+def configure_logging(  # noqa
     app_name: str,
     stderr_level: Optional[str] = "INFO",
     logfile_level: Optional[str] = "DEBUG",
@@ -155,6 +159,8 @@ def configure_logging(
     sentry_opts: Optional[dict] = None,
     extra_handlers: Optional[List[dict]] = None,
     attach_stdlib_logger: bool = False,
+    syslog_level: Optional[str] = None,
+    syslog_opts: Optional[dict] = None,
 ):
     """
     Configures handlers and options for the Loguru logger.
@@ -190,6 +196,28 @@ def configure_logging(
             if logfile_opts:
                 logfile_handler.update(**logfile_opts)
             handlers.append(logfile_handler)
+    
+    if syslog_level:
+        if platform.system() == 'Windows':
+            # syslog configs like level and facility don't apply in windows, 
+            # so we set up a basic event log handler instead
+            syslog_sink = logging.handlers.NTEventLogHandler(appname=app_name)
+        else:
+            # should handle ~90% of unixes
+            def_syslog_address = '/var/run/syslog' if platform.system() == 'Darwin' else '/dev/log'
+            if syslog_opts:
+                address = syslog_opts.get('syslog_address', def_syslog_address)
+            else:
+                address = def_syslog_address
+            syslog_sink = logging.handlers.SysLogHandler(address=address)
+            syslog_sink.ident = 'si-utils: '
+        syslog_handler = dict(
+                sink=syslog_sink, level=syslog_level, format=SYSLOG_FORMAT
+            )
+        if syslog_opts:
+            syslog_handler.update(syslog_opts)
+        handlers.append(syslog_handler)
+        
 
     if sentry_level:
         sentry_sink = get_sentry_sink(app_name)

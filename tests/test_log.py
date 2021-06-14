@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -64,7 +65,7 @@ def test_configure_logging_file_handling(
     caploguru_manual.add_handler()
     module_a.doathing()
     with logger.catch():
-        1 / 0
+        print(1/0)
     logfile = tmp_path.joinpath("test.log")
 
     # test logfile output
@@ -92,6 +93,24 @@ def test_attach_stdlib_logging(
         stderr_level="DEBUG",
         logfile_level=None,
         sentry_level=None,
+        stderr_opts={"colorize": False},
+        attach_stdlib_logger=True,
+    )
+    caploguru.add_handler()
+    module_a.doathing()
+    assert True
+
+def test_syslog_logging(
+    tmp_path: Path,
+    monkeypatch: "MonkeyPatch",
+    caploguru: 'CapLoguru',
+):
+    configure_logging(
+        app_name="test",
+        stderr_level="DEBUG",
+        logfile_level=None,
+        sentry_level=None,
+        syslog_level="DEBUG",
         stderr_opts={"colorize": False},
         attach_stdlib_logger=True,
     )
