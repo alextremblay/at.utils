@@ -58,9 +58,12 @@ def bump_version():
     pyproject["tool"]["poetry"]["version"] = new_version  # type: ignore
     init_file = Path(f"{package_name}/__init__.py")
     init_text = init_file.read_text()
-    init_text.replace(
-        f"__version__ = '{old_version}'", f"__version__ = '{new_version}'"
-    )
+    ver_strings_in_init_text = list(filter(lambda l: '__version__ =' in l, init_text.splitlines()))
+    if len(ver_strings_in_init_text) > 0:
+        old_ver_string = ver_strings_in_init_text[0]
+        init_text.replace(
+            old_ver_string, f"__version__ = '{new_version}'"
+        )
 
     # no turning back now!
     Path("pyproject.toml").write_text(tomlkit.dumps(pyproject))
