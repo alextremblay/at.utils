@@ -7,8 +7,10 @@ from typing import Callable, Dict, List, TYPE_CHECKING
 from types import ModuleType
 import inspect
 import re
+import argparse
 
 import loguru
+
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
@@ -32,19 +34,18 @@ def bump_version():
     bumps the version in pyproject.toml
     tags the current git commit with that version number
     """
-    if len(sys.argv) < 2:
-        bump_type = "patch"
-    else:
-        bump_type = sys.argv[1]
-    if bump_type not in ["major", "minor", "patch", "prerelease", "build"]:
-        print(f"invalid bump_type {bump_type}")
-        sys.exit()
+    semver_bump_types = ["major", "minor", "patch", "prerelease", "build"]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('bump_type', choices=semver_bump_types, default="patch", nargs='?')
+    parser.add_argument('--no-sign', action='store_true')
+    args = parser.parse_args()
     git_status = run(["git", "status"], stdout=PIPE, check=True).stdout.decode()
     if "nothing to commit, working tree clean" not in git_status:
         print(
             "git working tree not clean. aborting. run `git status` and commit"
             " or ignore all outstanding files, then try again."
         )
+        sys.exit(1)
     pyproject = tomlkit.parse(Path("pyproject.toml").read_text())
     package_name = pyproject["tool"]["poetry"]["name"]  # type: ignore
     old_version = pyproject["tool"]["poetry"]["version"]  # type: ignore
@@ -52,7 +53,7 @@ def bump_version():
     # for every bump_type in the list above, there is a bump_{type} method
     # on the VersionInfo object. here we look up the method and call it
     # ex if bump_type is 'patch', this will call version.bump_patch()
-    version = getattr(version, f"bump_{bump_type}")()
+    version = getattr(version, f"bump_{args.bump_type}")()
     new_version = str(version)
     pyproject["tool"]["poetry"]["version"] = new_version  # type: ignore
     init_file = Path(f"{package_name}/__init__.py")
@@ -69,8 +70,12 @@ def bump_version():
         ["git", "commit", "-m", f"bump version from {old_version} to {new_version}"],
         check=True,
     )
+    if args.no_sign:
+        sign = ""
+    else:
+        sign = "-s"
     run(
-        ["git", "tag", "-s", "-a", new_version, "-m", f"version {new_version}"],
+        ["git", "tag", sign, "-a", new_version, "-m", f"version {new_version}"],
         check=True,
     )
     print("done")
