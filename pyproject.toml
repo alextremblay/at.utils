@@ -15,7 +15,7 @@ deepmerge = {version = "*", optional = true}
 pydantic = {version = "*", optional = true}
 tomlkit = {version = "*", optional = true}
 semver = {version = "*", optional = true}
-pytest = {version = "*", optional = true}
+jinja2 = {version = "*", optional = true}
 
 [tool.poetry.extras]
 sentry = ["sentry-sdk"]

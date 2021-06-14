@@ -166,7 +166,7 @@ def get_config_obj_or_fail(app_name: str) -> Dict[str, Any]:
     into a dictionary. Can be called multiple times without triggering
     multiple file load / parsing operations
     only .json, .ini, and .toml config files are currently supported
-    for .ini files, keys in the DEFAULT section will be 'hoisted' so that they become
+    for .ini files, keys in the _common_ section will be 'hoisted' so that they become
     keys of the top level dictionary returned
 
     Args:
@@ -181,9 +181,10 @@ def get_config_obj_or_fail(app_name: str) -> Dict[str, Any]:
     if conf_file.suffix == ".ini":
         cfp = configparser.ConfigParser()
         cfp.read(conf_file)
-        obj = dict(cfp["DEFAULT"])
+        obj = dict(cfp["_common_"])
         for sect in cfp.sections():
-            obj.update(dict(cfp[sect]))
+            if sect != '_common_':
+                obj[sect] = dict(cfp[sect])
     elif conf_file.suffix == ".json":
         obj = dict(json.loads(conf_file.read_text()))
     elif conf_file.suffix == ".toml":

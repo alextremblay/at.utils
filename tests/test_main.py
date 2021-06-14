@@ -68,13 +68,15 @@ def test_get_config_obj_raises(mock_paths: dev_utils.SIUtilsPaths):
 def test_get_config_obj_ini(mock_paths: dev_utils.SIUtilsPaths):
     mock_paths.set_config_ini(
         """
-        [DEFAULT]
+        [_common_]
         key1 = val1
         key2 = val2
+        [extra]
+        key = value
         """,
     )
     result = main.get_config_obj_or_fail("test")
-    assert result == {"key1": "val1", "key2": "val2"}
+    assert result == {"key1": "val1", "key2": "val2", "extra": {"key": "value"}}
 
 
 # @pytest.mark.forked
