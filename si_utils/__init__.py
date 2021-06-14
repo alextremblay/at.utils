@@ -1,4 +1,4 @@
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 
 from .main import *  # noqa
 from .log import configure_logging # noqa
