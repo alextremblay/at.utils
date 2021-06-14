@@ -6,12 +6,14 @@ This module can be used even if you don't install any of si-util's extras
 """
 
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple, Union
 from pathlib import Path
 import configparser
 import json
 from textwrap import dedent
 import time
+
+from . import nested_data
 
 from ._vendor.appdirs import AppDirs
 from ._vendor.decorator import decorate

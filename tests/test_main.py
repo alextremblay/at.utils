@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from pathlib import Path
 import time
 
@@ -43,7 +44,8 @@ def test_get_config_file(mock_paths: dev_utils.SIUtilsPaths):
     file = main.get_config_file_or_fail("test")
     assert file.exists()
 
-#@pytest.mark.forked
+
+# @pytest.mark.forked
 def test_get_config_file_env_var(tmp_path: Path, monkeypatch: MonkeyPatch):
     # test the *_CONFIG_FILE env var
     test_file = tmp_path / "test.ini"
@@ -53,7 +55,7 @@ def test_get_config_file_env_var(tmp_path: Path, monkeypatch: MonkeyPatch):
     assert result.exists()
 
 
-#@pytest.mark.forked
+# @pytest.mark.forked
 def test_get_config_obj_raises(mock_paths: dev_utils.SIUtilsPaths):
     mock_paths.set_config_yaml(" ")
     with pytest.raises(Exception) as exc_info:
@@ -62,7 +64,7 @@ def test_get_config_obj_raises(mock_paths: dev_utils.SIUtilsPaths):
     assert error_message in exc_info.value.args[0]
 
 
-#@pytest.mark.forked
+# @pytest.mark.forked
 def test_get_config_obj_ini(mock_paths: dev_utils.SIUtilsPaths):
     mock_paths.set_config_ini(
         """
@@ -75,7 +77,7 @@ def test_get_config_obj_ini(mock_paths: dev_utils.SIUtilsPaths):
     assert result == {"key1": "val1", "key2": "val2"}
 
 
-#@pytest.mark.forked
+# @pytest.mark.forked
 def test_get_config_obj_json(mock_paths: dev_utils.SIUtilsPaths):
     mock_paths.set_config_json(
         """
@@ -89,7 +91,7 @@ def test_get_config_obj_json(mock_paths: dev_utils.SIUtilsPaths):
     assert result == {"key1": "val1", "key2": "val2"}
 
 
-#@pytest.mark.forked
+# @pytest.mark.forked
 def test_get_config_obj_toml(mock_paths: dev_utils.SIUtilsPaths):
     mock_paths.set_config_toml(
         """
@@ -135,11 +137,13 @@ def test_get_cache_dir(mock_paths: dev_utils.SIUtilsPaths):
     assert mock_paths.cache_dir.joinpath("test.txt").exists()
 
 
-@pytest.mark.skip("""
+@pytest.mark.skip(
+    """
 This test relies on time.perf_counter and time.sleep, 
 which don't always seem to play nicely together. 
 This test is flaky, and exists as more of a living document / api contract than an actual test. 
-Skipped by default, but should be run periodically to ensure Timeit API hasn't diverged from expectation""")
+Skipped by default, but should be run periodically to ensure Timeit API hasn't diverged from expectation"""
+)
 def test_timeit():
     # the clock starts as soon as the class is initialized
     timer = main.Timeit()

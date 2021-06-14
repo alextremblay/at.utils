@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from si_utils import yaml
 from si_utils.main import txt
 
@@ -34,7 +35,8 @@ def test_yaml():
     assert isinstance(s["list"], CommentedSeq)
     c1 = yaml.get_comment(s["list"])
     assert c1 == "comment on list"
-    c2 = yaml.get_comment(s["list"], 0)  # type: ignore
+    c2 = yaml.get_comment(s["list"], 0)
+    assert isinstance(c2, str)
     assert "comment on list item" in c2
     c3 = yaml.get_comment(s["list"], 1)  # type: ignore
     assert c3 is None

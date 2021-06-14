@@ -1,5 +1,5 @@
 from io import StringIO
-from typing import Iterator, Optional, Sequence, Tuple, Union, Pattern
+from typing import Iterator, List, Optional, Sequence, Tuple, Union, Pattern, cast
 import re
 
 from .main import cache
@@ -7,7 +7,7 @@ from .main import cache
 try:
     import ruamel.yaml
     from ruamel.yaml.comments import CommentedMap, CommentedBase
-    # from ruamel.yaml.tokens import CommentToken
+    from ruamel.yaml.tokens import CommentToken
     from deepmerge import always_merger as merger
     # from boltons.iterutils import remap
     from pydantic import BaseModel
@@ -27,8 +27,8 @@ def re_partition(regex: Pattern, s: str):
     match = regex.search(s)
     if match:
         return s[:match.start()], s[slice(*match.span())], s[match.end():]
-    else:
-        return (s, '', '')
+    # else:
+    return (s, '', '')
 
 
 def re_rpartition(regex: Pattern, s: str):
@@ -38,8 +38,8 @@ def re_rpartition(regex: Pattern, s: str):
         pass
     if match:
         return s[:match.start()], s[slice(*match.span())], s[match.end():]
-    else:
-        return ('', '', s)
+    # else:
+    return ('', '', s)
 
 
 @cache
@@ -70,7 +70,7 @@ def deep_merge_yaml(s: str, data):
     return doc
 
 
-def get_comment(obj: CommentedBase, key: Optional[str] = None) -> Optional[str]: # noqa
+def get_comment(obj: CommentedBase, key: Optional[Union[str, int]] = None) -> Optional[str]: # noqa
     """
     Take a yaml object, and fetch comments from it. if a key is provided,
     fetch the comment associated with that key
@@ -92,10 +92,11 @@ def get_comment(obj: CommentedBase, key: Optional[str] = None) -> Optional[str]:
         # CommentToken changes depending on... something?
         # so we'll jsut filter the list looking for the first comment token
     comment_list = [token for token in comment_list if token]
+    comment_list = cast(Optional[List[CommentToken]], comment_list)
     if comment_list:
         return comment_list[0].value.partition('#')[2].strip()
-    else:
-        return None
+    # else:
+    return None
 
 
 def flatten_yaml(s: Union[CommentedMap, str], sep) -> Iterator[YamlValue]:
