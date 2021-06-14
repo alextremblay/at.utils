@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "si_utils"
-version = "0.4.1"
+version = "0.4.2"
 description = "an opinionated set of utilities designed to be easily included in any number of projects"
 readme = "README.md"
 authors = ["Alex Tremblay <alex.tremblay@utoronto.ca>", "University of Toronto Governing Council <governing.council@utoronto.ca>"]
