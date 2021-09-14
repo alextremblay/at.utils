@@ -7,13 +7,13 @@ It's designed to be easy to include in other projects. all of its mainline depen
 # Install
 
 ```
-pip install si-utils
+pip install at-utils
 ```
 
 To make use of optional extras, like the yaml module or the dev_utils module:
 
 ```
-pip install si-utils[yaml] # or si-utils[dev_utils], or si-utils[yaml,sentry]
+pip install at-utils[yaml] # or at-utils[dev_utils], or at-utils[yaml,sentry]
 ```
 
 # Usage
@@ -38,7 +38,7 @@ import os
 
 from .common import my_super_awesome_function
 
-import si_utils
+import at_utils
 import typer
 from loguru import logger
 
@@ -52,7 +52,7 @@ def callback(verbose: bool = False):
     Users will see this when they run `python -m my_package`
     """
     log_level = 'DEBUG' if verbose else 'INFO'
-    si_utils.configure_logging(
+    at_utils.configure_logging(
         'my_app_name', 
         stderr_level=log_level, 
         logfile_level='DEBUG', 
@@ -85,11 +85,11 @@ if __name__ == "__main__":
 
 ```
 
-the main api (all the stuff directly importable from `si_utils`) consists of:
+the main api (all the stuff directly importable from `at_utils`) consists of:
 - every function defined in the `main` module
 - the `configure_logging` function from the `log` module
 
-`configure_logging` has an option to enable logging to sentry. in order to use it, you need to install si_utils with the `sentry` extra (ie `pip install si-utils[sentry]` or `poetry add -D si-utils[sentry]`)
+`configure_logging` has an option to enable logging to sentry. in order to use it, you need to install at_utils with the `sentry` extra (ie `pip install at-utils[sentry]` or `poetry add -D at-utils[sentry]`)
 
 apart from that, there are other modules which can be imported separately:
 

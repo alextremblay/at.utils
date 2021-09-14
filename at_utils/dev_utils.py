@@ -1,5 +1,5 @@
-from si_utils.log import configure_logging
-from si_utils import main
+from at_utils.log import configure_logging
+from at_utils import main
 from subprocess import run, PIPE
 import sys
 from pathlib import Path
@@ -22,8 +22,8 @@ try:
     import pytest
 except ImportError:
     raise ImportError(
-        "In order to use this module, the si-utils package must be installed "
-        "with the 'dev-utils' extra (ex. `pip install si-utils[dev-utils]"
+        "In order to use this module, the at-utils package must be installed "
+        "with the 'dev-utils' extra (ex. `pip install at-utils[dev-utils]"
     )
 
 
@@ -224,7 +224,7 @@ class SIUtilsPaths:
 
 
 @pytest.fixture
-def mock_si_utils_paths(
+def mock_at_utils_paths(
     tmp_path: Path,
     monkeypatch: "MonkeyPatch",
 ) -> Callable[..., SIUtilsPaths]:
@@ -237,11 +237,11 @@ def mock_si_utils_paths(
     Example:
         ```python
         # conftest.py
-        from si_utils.dev_utils import mock_si_utils_paths, SIUtilsPaths
+        from at_utils.dev_utils import mock_at_utils_paths, SIUtilsPaths
 
         @pytest.fixture
-        def mock_config(mock_si_utils_paths) -> SIUtilsPaths:
-            return mock_si_utils_paths("my-app-name")
+        def mock_config(mock_at_utils_paths) -> SIUtilsPaths:
+            return mock_at_utils_paths("my-app-name")
         ```
     """
 
@@ -271,7 +271,7 @@ def mock_si_utils_paths(
 def caploguru_manual(request: "FixtureRequest") -> CapLoguru:
     """Return a CapLoguru instance that can be attached to loguru.logger
 
-    After si_utils.configure_logging has been called, call this fixture's
+    After at_utils.configure_logging has been called, call this fixture's
     `add_handler()` method to start collecting logs
 
     This fixture is only necessary if you need to configure loguru directly.
@@ -296,7 +296,7 @@ def caploguru_base(caploguru_manual: CapLoguru) -> Callable[..., CapLoguru]:
     Example:
         ```python
         # conftest.py
-        from si_utils.dev_utils import caploguru_base, CapLoguru
+        from at_utils.dev_utils import caploguru_base, CapLoguru
 
         @pytest.fixture
         def caploguru(caploguru_base) -> CapLoguru:

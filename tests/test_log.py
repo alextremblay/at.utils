@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from si_utils import configure_logging
+from at_utils import configure_logging
 
 from .fixtures import module_a
 
@@ -11,7 +11,7 @@ from loguru import logger
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
     from _pytest.capture import CaptureFixture
-    from si_utils.dev_utils import CapLoguru
+    from at_utils.dev_utils import CapLoguru
 
 
 def test_configure_logging(

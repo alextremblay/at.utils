@@ -10,7 +10,7 @@ import platform
 from ._vendor.appdirs import user_log_dir
 from loguru import logger as log
 
-log.disable("si_utils")
+log.disable("at_utils")
 
 STDERR_FORMAT = "<blue>{extra[app_name]}</> | <level>{level.name:8}</>| <bold>{message}</>"  # noqa
 
@@ -18,7 +18,7 @@ LOGFILE_FORMAT = "{time:MM-DD HH:mm} | {name}:{function}:{line} - {level.name: ^
 
 SYSLOG_FORMAT = "{extra[app_name]} | {name}:{function}:{line} - {level.name: ^8} | {message} | Data: {extra}"  # noqa
 
-DEFAULT_LOG_DIR = "/var/log/si-utils"
+DEFAULT_LOG_DIR = "/var/log/at-utils"
 
 
 class InterceptHandler(logging.Handler):
@@ -60,8 +60,8 @@ def get_sentry_sink(app_name: str) -> Optional[Callable]:
     except ImportError:
         log.debug(
             "the sentry_sdk package is not installed. Sentry logging disabled."
-            ' Please install si-utils with the "sentry" extra '
-            "(ex. `pip install si-utils[sentry]`)."
+            ' Please install at-utils with the "sentry" extra '
+            "(ex. `pip install at-utils[sentry]`)."
         )
         return None
     # the way we set up sentry logging assumes you have one sentry
@@ -210,7 +210,7 @@ def configure_logging(  # noqa
             else:
                 address = def_syslog_address
             syslog_sink = logging.handlers.SysLogHandler(address=address)
-            syslog_sink.ident = 'si-utils: '
+            syslog_sink.ident = 'at-utils: '
         syslog_handler = dict(
                 sink=syslog_sink, level=syslog_level, format=SYSLOG_FORMAT
             )

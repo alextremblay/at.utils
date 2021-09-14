@@ -20,7 +20,7 @@ from ._vendor.decorator import decorate
 from ._vendor import toml
 from loguru import logger as log
 
-log.disable("si_utils")
+log.disable("at_utils")
 
 
 def _cache(func, *args, **kw):
@@ -48,8 +48,8 @@ def cache(f):
 def get_config_file_or_fail(app_name: str) -> Path:
     """
     Find a valid config file for a given app name.
-    File can be stored in a site-wide directory (ex. /etc/xdg/si-utils)
-    or a user-local directory (ex. ~/.config/si-utils)
+    File can be stored in a site-wide directory (ex. /etc/xdg/at-utils)
+    or a user-local directory (ex. ~/.config/at-utils)
     file must have name matching `app_name` and one of the
     following extensions: ['.ini', '.yaml', '.json', '.toml']
     if an environment variable like {app_name}_CONFIG_FILE exists and points
@@ -105,7 +105,7 @@ def get_config_file_or_fail(app_name: str) -> Path:
             "Adding it to the config file search path"
         )
     else:
-        site_conf = Path(AppDirs("si-utils").site_config_dir)
+        site_conf = Path(AppDirs("at-utils").site_config_dir)
     site_conf_files = [site_conf.joinpath(name) for name in config_file_names]
     all_conf_files.extend(site_conf_files)
 
@@ -119,7 +119,7 @@ def get_config_file_or_fail(app_name: str) -> Path:
             "Adding it to the config file search path"
         )
     else:
-        user_conf = Path(AppDirs("si-utils").user_config_dir)
+        user_conf = Path(AppDirs("at-utils").user_config_dir)
     user_conf_files = [user_conf.joinpath(name) for name in config_file_names]
     all_conf_files.extend(user_conf_files)
 
@@ -300,7 +300,7 @@ def get_cache_dir(app_name: str) -> Path:
             "Adding it to the config file search path"
         )
     else:
-        system_cache_dir = Path(AppDirs("si-utils").site_data_dir)
+        system_cache_dir = Path(AppDirs("at-utils").site_data_dir)
     system_cache_dir = system_cache_dir.joinpath(app_name)
     try:
         system_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -316,7 +316,7 @@ def get_cache_dir(app_name: str) -> Path:
             "Adding it to the config file search path"
         )
     else:
-        user_cache_dir = Path(AppDirs("si-utils").user_cache_dir)
+        user_cache_dir = Path(AppDirs("at-utils").user_cache_dir)
     user_cache_dir = user_cache_dir.joinpath(app_name)
     try:
         user_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -379,7 +379,7 @@ class Timeit:
     elapsed real time between two points of execution.
 
     Example:
-        from si_utils.main import Timeit
+        from at_utils.main import Timeit
 
         # the clock starts as soon as the class is initialized
         timer = Timeit()

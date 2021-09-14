@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "si_utils"
+name = "at_utils"
 version = "0.4.3"
 description = "an opinionated set of utilities designed to be easily included in any number of projects"
 readme = "README.md"
@@ -34,7 +34,7 @@ prospector = "*"
 
 [tool.poe.tasks]
 cov.cmd = "pytest --cov-report xml:cov.xml --cov-report term-missing --cov"
-bump-version.script = "si_utils.dev_utils:bump_version"
+bump-version.script = "at_utils.dev_utils:bump_version"
 vendor.shell = "vendy"
 sudo-install.shell = """\
     rm -f dist/*
@@ -47,7 +47,7 @@ publish.shell = """\
     poetry publish"""
 
 [tool.vendy]
-target = 'si_utils'
+target = 'at_utils'
 packages = [
     "appdirs>=1.4",
     "decorator>=4.4",

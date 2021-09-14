@@ -1,4 +1,4 @@
-from si_utils import __version__
+from at_utils import __version__
 
 
 def test_version():

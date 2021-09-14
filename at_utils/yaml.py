@@ -13,8 +13,8 @@ try:
     from pydantic import BaseModel
 except ImportError:
     raise ImportError(
-        "In order to use this module, the si-utils package must be "
-        "installed with the 'yaml' extra (ex. `pip install si-utils[yaml]")
+        "In order to use this module, the at-utils package must be "
+        "installed with the 'yaml' extra (ex. `pip install at-utils[yaml]")
 
 
 KeyPath = str

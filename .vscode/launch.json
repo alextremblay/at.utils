@@ -15,7 +15,7 @@
             "name": "Python: Module: __init__",
             "type": "python",
             "request": "launch",
-            "module": "si_utils.__init__",
+            "module": "at_utils.__init__",
             "console": "integratedTerminal",
             "env": {
                 "PYDEBUG": "1"
