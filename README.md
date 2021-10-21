@@ -7,14 +7,10 @@ It's designed to be easy to include in other projects. all of its mainline depen
 # Install
 
 ```
-pip install at-utils
+pip install at.utils
 ```
 
-To make use of optional extras, like the yaml module or the dev_utils module:
-
-```
-pip install at-utils[yaml] # or at-utils[dev_utils], or at-utils[yaml,sentry]
-```
+TODO: add details about optional dependencies
 
 # Usage
 
@@ -38,7 +34,7 @@ import os
 
 from .common import my_super_awesome_function
 
-import at_utils
+from at.utils import configure_logging
 import typer
 from loguru import logger
 
@@ -52,7 +48,7 @@ def callback(verbose: bool = False):
     Users will see this when they run `python -m my_package`
     """
     log_level = 'DEBUG' if verbose else 'INFO'
-    at_utils.configure_logging(
+    configure_logging(
         'my_app_name', 
         stderr_level=log_level, 
         logfile_level='DEBUG', 

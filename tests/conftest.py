@@ -1,13 +1,16 @@
-from at_utils.dev_utils import caploguru_base, caploguru_manual, CapLoguru, mock_at_utils_paths, SIUtilsPaths # noqa
 
+
+import os
 import pytest
 
+pytest_plugins = ['at.utils.fixtures']
 
-@pytest.fixture
-def mock_paths(mock_at_utils_paths) -> SIUtilsPaths: # noqa
-    return mock_at_utils_paths('test')
+if os.getenv('_PYTEST_RAISE', "0") != "0":
+    # set up hooks for VSCode debugger to break on exceptions
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_exception_interact(call):
+        raise call.excinfo.value
 
-
-@pytest.fixture
-def caploguru(caploguru_base) -> CapLoguru: # noqa
-    return caploguru_base('test')
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_internalerror(excinfo):
+        raise excinfo.value

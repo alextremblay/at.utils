@@ -2,5 +2,6 @@
     "python.pythonPath": ".venv/bin/python",
     "python.testing.pytestArgs": [
         "--no-cov"
-    ]
+    ],
+    "python.linting.enabled": false
 }

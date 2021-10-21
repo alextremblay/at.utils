@@ -1,26 +1,27 @@
 [tool.poetry]
-name = "at_utils"
-version = "0.4.3"
+name = "at.utils"
+version = "0.5.0"
 description = "an opinionated set of utilities designed to be easily included in any number of projects"
 readme = "README.md"
 authors = ["Alex Tremblay <alex.tremblay@utoronto.ca>", "University of Toronto Governing Council <governing.council@utoronto.ca>"]
 license = "MIT"
+packages = [
+  { include = "at", from = "src" }
+]
 
 [tool.poetry.dependencies]
-python = ">=3.6,<4.0"
+python = ">=3.6.2,<4.0"
 loguru = {version = "*"}
-sentry-sdk = {version = "*", optional = true}
-"ruamel.yaml" = {version = "*", optional = true}
-deepmerge = {version = "*", optional = true}
-pydantic = {version = "*", optional = true}
-tomlkit = {version = "*", optional = true}
+typer = {version = "*"}
+rich = {version = "*"}
+pydantic = {version = ">=1.8", optional = true}
+jinja2 = {version = ">=3.0", optional = true}
+sentry-sdk = {version = ">=1.4", optional = true}
 semver = {version = "*", optional = true}
-jinja2 = {version = "*", optional = true}
+pytest = {version = "*", optional = true}
 
 [tool.poetry.extras]
-sentry = ["sentry-sdk"]
-yaml = ["ruamel.yaml", "deepmerge", "pydantic"]
-dev-utils = ["tomlkit", "semver", "pytest"]
+all = ["pydantic", "jinja2", "sentry-sdk", "semver", "pytest"]
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
@@ -28,9 +29,11 @@ mypy = "*"
 flake8 = "*"
 poethepoet = "*"
 flake8-bugbear = "*"
-vendy = "*"
 pytest-cov = "*"
 prospector = "*"
+mock = "^4.0.3"
+black = {version = "^21.9b0", allow-prereleases = true}
+pytest-mock = "^3.6.1"
 
 [tool.poe.tasks]
 cov.cmd = "pytest --cov-report xml:cov.xml --cov-report term-missing --cov"
@@ -45,15 +48,6 @@ publish.shell = """\
     git push --follow-tags
     poetry build
     poetry publish"""
-
-[tool.vendy]
-target = 'at_utils'
-packages = [
-    "appdirs>=1.4",
-    "decorator>=4.4",
-    "boltons>=20",
-    "toml>=0.10",
-]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
