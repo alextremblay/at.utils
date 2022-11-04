@@ -1,6 +1,6 @@
 # This project has moved
 
-Its new home is https://github.com/utsc-networking/monorepo/tree/main/projects/core
+Its new home is https://github.com/uoft-networking/tools/tree/main/projects/core
 
 # About
 
